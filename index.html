@@ -1,674 +1,441 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>종합소득세 간편 계산기</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <style>
-        body {
-            font-family: 'Inter', sans-serif;
-            background-color: #f3f4f6;
-        }
-        .collapsible-header {
-            cursor: pointer;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-        .collapsible-icon {
-            transition: transform 0.3s ease-in-out;
-        }
-        .collapsible-icon.rotated {
-            transform: rotate(90deg);
-        }
-        .copy-button-active {
-            background-color: #9ca3af; /* Tailwind gray-400 */
-            pointer-events: none;
-        }
-        .modal-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-color: rgba(0, 0, 0, 0.5);
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            z-index: 1000;
-        }
-        .modal-container {
-            background-color: white;
-            padding: 24px;
-            border-radius: 12px;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-            max-width: 90%;
-            max-height: 90%;
-            overflow-y: auto;
-            position: relative;
-        }
-    </style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>종합소득세 간편 계산기 - 개선 단일버전 v3.1</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    body { font-family: 'Inter', sans-serif; background-color: #f3f4f6; }
+    .collapsible-header { cursor: pointer; display: flex; justify-content: space-between; align-items: center; }
+    .collapsible-icon { transition: transform 0.3s ease-in-out; }
+    .collapsible-icon.rotated { transform: rotate(90deg); }
+    .copy-button-active { background-color: #9ca3af; pointer-events: none; }
+    .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.5); display: flex; justify-content: center; align-items: center; z-index: 1000; }
+    .modal-container { background-color: white; padding: 24px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); max-width: 90%; max-height: 90%; overflow-y: auto; position: relative; }
+    .message-box { position: fixed; top: 20px; left: 50%; transform: translateX(-50%); background-color: #f87171; color: #fff; padding: 12px 24px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); z-index: 2000; opacity: 0; visibility: hidden; transition: opacity .3s, visibility .3s; }
+    .message-box.show { opacity: 1; visibility: visible; }
+  </style>
 </head>
 <body class="bg-gray-100 p-4 min-h-screen flex items-center justify-center">
+  <div class="bg-white rounded-2xl shadow-xl w-full max-w-lg p-6 sm:p-8">
+    <h1 class="text-3xl font-bold text-center text-gray-800 mb-2">종합소득세 간편 계산기</h1>
+    <p class="text-center text-gray-500 font-semibold mb-6 cursor-pointer" onclick="showLogicModal()">Ver 3.1</p>
 
-    <!-- Main Container -->
-    <div class="bg-white rounded-2xl shadow-xl w-full max-w-lg p-6 sm:p-8">
-        <h1 class="text-3xl font-bold text-center text-gray-800 mb-2">종합소득세 간편 계산기</h1>
-        <p class="text-center text-gray-500 font-semibold mb-6 cursor-pointer" onclick="showLogicModal()">
-            Ver 3.0
-        </p>
-
-        <!-- Input Form -->
-        <div id="calculatorForm" class="space-y-4">
-            <!-- Total Income -->
-            <div>
-                <label for="grossIncome" class="block text-sm font-medium text-gray-700 mb-1">총수입금액</label>
-                <div class="relative rounded-md shadow-sm">
-                    <input type="text" id="grossIncome" class="block w-full rounded-md border-gray-300 shadow-sm p-3 focus:ring-blue-500 focus:border-blue-500 transition" placeholder="예: 50,000,000" oninput="formatNumber(this)">
-                    <div class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
-                        <span class="text-gray-500 sm:text-sm">원</span>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Current Income Rate & Effective Income Rate in a single row -->
-            <div class="flex space-x-4">
-                <div class="flex-1">
-                    <label for="currentIncomeRate" class="block text-sm font-medium text-gray-700 mb-1">현재 소득률</label>
-                    <div class="relative rounded-md shadow-sm">
-                        <input type="number" id="currentIncomeRate" class="block w-full rounded-md border-gray-300 shadow-sm p-3 focus:ring-blue-500 focus:border-blue-500 transition" placeholder="예: 40" min="0" max="100">
-                        <div class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
-                            <span class="text-gray-500 sm:text-sm">%</span>
-                        </div>
-                    </div>
-                </div>
-                <div class="flex-1">
-                    <label for="effectiveIncomeRate" class="block text-sm font-medium text-gray-700 mb-1">실질 소득률</label>
-                    <div class="relative rounded-md shadow-sm">
-                        <input type="number" id="effectiveIncomeRate" class="block w-full rounded-md border-gray-300 shadow-sm p-3 focus:ring-blue-500 focus:border-blue-500 transition" placeholder="예: 40" min="0" max="100">
-                        <div class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
-                            <span class="text-gray-500 sm:text-sm">%</span>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Target Income Rate & Required Expense in a single row -->
-            <div class="flex space-x-4">
-                <div class="flex-1">
-                    <label for="targetIncomeRate" class="block text-sm font-medium text-gray-700 mb-1">목표 소득률</label>
-                    <div class="relative rounded-md shadow-sm">
-                        <input type="number" id="targetIncomeRate" class="block w-full rounded-md border-gray-300 shadow-sm p-3 focus:ring-blue-500 focus:border-blue-500 transition" placeholder="예: 40" min="0" max="100">
-                        <div class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
-                            <span class="text-gray-500 sm:text-sm">%</span>
-                        </div>
-                    </div>
-                </div>
-                <div class="flex-1">
-                    <label for="requiredExpenseInput" class="block text-sm font-medium text-gray-700 mb-1">필요경비</label>
-                    <div class="relative rounded-md shadow-sm">
-                        <input type="text" id="requiredExpenseInput" class="block w-full rounded-md border-gray-300 shadow-sm p-3 focus:ring-blue-500 focus:border-blue-500 transition" placeholder="예: 500" oninput="formatNumber(this)">
-                        <div class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
-                            <span class="text-gray-500 sm:text-sm">만</span>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            
-            <!-- Other Income -->
-            <div>
-                <label for="otherIncome" class="block text-sm font-medium text-gray-700 mb-1">그 외 소득금액</label>
-                <div class="relative rounded-md shadow-sm">
-                    <input type="text" id="otherIncome" class="block w-full rounded-md border-gray-300 shadow-sm p-3 focus:ring-blue-500 focus:border-blue-500 transition" placeholder="예: 1,000,000" oninput="formatNumber(this)">
-                    <div class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
-                        <span class="text-gray-500 sm:text-sm">원</span>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Income Deductions -->
-            <div>
-                <label for="deductions" class="block text-sm font-medium text-gray-700 mb-1">소득공제</label>
-                <div class="relative rounded-md shadow-sm">
-                    <input type="text" id="deductions" class="block w-full rounded-md border-gray-300 shadow-sm p-3 focus:ring-blue-500 focus:border-blue-500 transition" placeholder="예: 1,500,000" oninput="formatNumber(this)">
-                    <div class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
-                        <span class="text-gray-500 sm:text-sm">원</span>
-                    </div>
-                </div>
-            </div>
-            
-            <!-- Tax Credits -->
-            <div>
-                <label for="taxCredits" class="block text-sm font-medium text-gray-700 mb-1">세액공제액</label>
-                <div class="relative rounded-md shadow-sm">
-                    <input type="text" id="taxCredits" class="block w-full rounded-md border-gray-300 shadow-sm p-3 focus:ring-blue-500 focus:border-blue-500 transition" placeholder="예: 150,000" oninput="formatNumber(this)">
-                    <div class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
-                        <span class="text-gray-500 sm:text-sm">원</span>
-                    </div>
-                </div>
-            </div>
-            
-            <!-- Interim Prepayment -->
-            <div>
-                <label for="interimPrepayment" class="block text-sm font-medium text-gray-700 mb-1">중간예납</label>
-                <div class="relative rounded-md shadow-sm">
-                    <input type="text" id="interimPrepayment" class="block w-full rounded-md border-gray-300 shadow-sm p-3 focus:ring-blue-500 focus:border-blue-500 transition" placeholder="예: 50,000" oninput="formatNumber(this)">
-                    <div class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
-                        <span class="text-gray-500 sm:text-sm">원</span>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Withholding Tax Amount -->
-            <div>
-                <label for="withholdingTax" class="block text-sm font-medium text-gray-700 mb-1">원천납부금액</label>
-                <div class="relative rounded-md shadow-sm">
-                    <input type="text" id="withholdingTax" class="block w-full rounded-md border-gray-300 shadow-sm p-3 focus:ring-blue-500 focus:border-blue-500 transition" placeholder="예: 100,000" oninput="formatNumber(this)">
-                    <div class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
-                        <span class="text-gray-500 sm:text-sm">원</span>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Buttons -->
-            <div class="flex space-x-4 mt-6">
-                <button onclick="calculateTax()" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-4 rounded-md transition-colors duration-200 shadow-lg">
-                    세금 계산하기
-                </button>
-                <button onclick="resetCalculator()" class="w-full bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-3 px-4 rounded-md transition-colors duration-200 shadow-lg">
-                    초기화
-                </button>
-            </div>
+    <!-- 입력 폼 -->
+    <div id="calculatorForm" class="space-y-4">
+      <!-- 총수입금액 -->
+      <div>
+        <label for="grossIncome" class="block text-sm font-medium text-gray-700 mb-1">총수입금액</label>
+        <div class="relative rounded-md shadow-sm">
+          <input type="text" id="grossIncome" class="block w-full rounded-md border-gray-300 shadow-sm p-3 focus:ring-blue-500 focus:border-blue-500 transition" placeholder="예: 50,000,000" oninput="formatNumber(this)">
+          <div class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none"><span class="text-gray-500 sm:text-sm">원</span></div>
         </div>
+      </div>
 
-        <!-- Result Display -->
-        <div id="result" class="mt-8 p-6 bg-gray-50 border border-gray-200 rounded-lg hidden">
-            <div class="collapsible-header" onclick="toggleResult()">
-                <h3 class="text-xl font-bold text-gray-800 mb-4">계산 결과</h3>
-                <span id="resultIcon" class="collapsible-icon transform transition-transform duration-300">&#9654;</span>
-            </div>
-            <div id="resultDetails" class="space-y-3 hidden">
-                <div class="flex justify-between items-center text-sm font-medium text-gray-600">
-                    <span>총수입금액</span>
-                    <span id="enteredGrossIncome" class="text-gray-900 font-bold"></span>
-                </div>
-                <div class="flex justify-between items-center text-sm font-medium text-gray-600">
-                    <span>소득률</span>
-                    <span id="enteredIncomeRate" class="text-gray-900 font-bold"></span>
-                </div>
-                <!-- Conditional income display based on otherIncome -->
-                <div id="businessIncomeContainer" class="flex justify-between items-center text-sm font-medium text-gray-600 hidden">
-                    <span>사업소득금액</span>
-                    <span id="businessIncome" class="text-gray-900 font-bold"></span>
-                </div>
-                <div id="otherIncomeContainer" class="flex justify-between items-center text-sm font-medium text-gray-600 hidden">
-                    <span>그 외 소득금액</span>
-                    <span id="enteredOtherIncome" class="text-gray-900 font-bold"></span>
-                </div>
-                <div id="comprehensiveIncomeContainer" class="flex justify-between items-center text-sm font-medium text-gray-600">
-                    <span>종합소득금액</span>
-                    <span id="calculatedIncome" class="text-gray-900 font-bold"></span>
-                </div>
-                <!-- End of conditional display -->
-                <div class="flex justify-between items-center text-sm font-medium text-gray-600">
-                    <span>소득공제</span>
-                    <span id="enteredDeductions" class="text-gray-900 font-bold"></span>
-                </div>
-                <div class="flex justify-between items-center text-sm font-medium text-gray-600">
-                    <span>과세표준</span>
-                    <span id="taxableBase" class="text-gray-900 font-bold"></span>
-                </div>
-                <div class="flex justify-between items-center text-sm font-medium text-gray-600">
-                    <span>산출세액</span>
-                    <span id="calculatedTax" class="text-gray-900 font-bold"></span>
-                </div>
-                <div class="flex justify-between items-center text-sm font-medium text-gray-600">
-                    <span>최저한세 기준금액</span>
-                    <span id="minimumTaxAmount" class="text-gray-900 font-bold"></span>
-                </div>
-                <div class="flex justify-between items-center text-sm font-medium text-gray-600">
-                    <span>실제 적용 세액공제액</span>
-                    <span id="appliedTaxCredits" class="text-gray-900 font-bold"></span>
-                </div>
-                 <div class="flex justify-between items-center text-sm font-medium text-gray-600">
-                    <span>농어촌특별세</span>
-                    <span id="ruralTax" class="text-gray-900 font-bold"></span>
-                </div>
-                <hr class="border-gray-200">
-                <div class="flex justify-between items-center text-lg font-bold text-gray-800">
-                    <span>결정세액</span>
-                    <span id="finalTax" class="text-blue-600 text-xl"></span>
-                </div>
-                 <div class="flex justify-between items-center text-sm font-medium text-gray-600 mt-4">
-                    <span>중간예납</span>
-                    <span id="enteredInterimPrepayment" class="text-gray-900 font-bold"></span>
-                </div>
-                <div class="flex justify-between items-center text-sm font-medium text-gray-600">
-                    <span>원천납부금액</span>
-                    <span id="enteredWithholdingTax" class="text-gray-900 font-bold"></span>
-                </div>
-                <hr class="border-gray-200">
-                <div class="flex justify-between items-center text-lg font-bold text-gray-800">
-                    <span>차감 납부 소득세</span>
-                    <span id="netIncomeTax" class="text-blue-600 text-xl"></span>
-                </div>
-                <div class="flex justify-between items-center text-lg font-bold text-gray-800">
-                    <span>차감 납부 지방세</span>
-                    <span id="netLocalTax" class="text-blue-600 text-xl"></span>
-                </div>
-            </div>
+      <!-- 현재/실질 소득률 한 줄 -->
+      <div class="flex space-x-4">
+        <div class="flex-1">
+          <label for="currentIncomeRate" class="block text-sm font-medium text-gray-700 mb-1">현재 소득률</label>
+          <div class="relative rounded-md shadow-sm">
+            <input type="number" step="0.1" id="currentIncomeRate" class="block w-full rounded-md border-gray-300 shadow-sm p-3 focus:ring-blue-500 focus:border-blue-500 transition" placeholder="예: 40" min="0" max="100">
+            <div class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none"><span class="text-gray-500 sm:text-sm">%</span></div>
+          </div>
         </div>
+        <div class="flex-1">
+          <label for="effectiveIncomeRate" class="block text-sm font-medium text-gray-700 mb-1">실질 소득률</label>
+          <div class="relative rounded-md shadow-sm">
+            <input type="number" step="0.1" id="effectiveIncomeRate" class="block w-full rounded-md border-gray-300 shadow-sm p-3 focus:ring-blue-500 focus:border-blue-500 transition" placeholder="예: 40" min="0" max="100">
+            <div class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none"><span class="text-gray-500 sm:text-sm">%</span></div>
+          </div>
+        </div>
+      </div>
 
-        <!-- Summary Box -->
-        <div id="summaryBox" class="mt-8 p-6 bg-blue-50 border border-blue-200 rounded-lg hidden">
-            <h3 class="text-xl font-bold text-blue-800 mb-4">총괄 요약</h3>
-            <div class="space-y-3">
-                 <div id="effectivePreTaxIncomeSummary" class="flex justify-between items-center text-base font-bold text-gray-800"></div>
-                 <div id="effectivePostTaxIncomeSummary" class="flex justify-between items-center text-base font-bold text-gray-800"></div>
-                 <div id="totalTaxSummary" class="flex justify-between items-center text-base font-bold text-gray-800"></div>
-                 <div class="flex justify-between items-center text-sm font-medium text-gray-600">
-                    <span>소득률</span>
-                    <span id="summaryIncomeRate" class="text-blue-900 font-bold text-lg"></span>
-                </div>
-                <div id="requiredExpenseContainer" class="flex justify-between items-center text-sm font-medium text-gray-600 hidden">
-                    <span>필요경비</span>
-                    <span id="requiredExpense" class="text-blue-900 font-bold text-lg"></span>
-                </div>
-                
-                <!-- Conditional Tax Summary Display -->
-                <div id="taxSummaryBeforeAfterContainer">
-                    <div class="flex justify-between items-center text-sm font-medium text-gray-600">
-                        <span>공제 전 세금</span>
-                        <span id="summaryTaxBefore" class="text-blue-900 font-bold text-lg"></span>
-                    </div>
-                    <div class="flex justify-between items-center text-sm font-medium text-gray-600">
-                        <span>공제 후 세금</span>
-                        <span id="summaryTaxAfter" class="text-blue-900 font-bold text-lg"></span>
-                    </div>
-                </div>
-                <div id="taxSummaryTotalContainer" class="hidden">
-                    <div class="flex justify-between items-center text-sm font-medium text-gray-600">
-                        <span>세금</span>
-                        <span id="summaryTaxTotal" class="text-blue-900 font-bold text-lg"></span>
-                    </div>
-                </div>
+      <!-- 목표 소득률 / 필요경비 한 줄 -->
+      <div class="flex space-x-4">
+        <div class="flex-1">
+          <label for="targetIncomeRate" class="block text-sm font-medium text-gray-700 mb-1">목표 소득률</label>
+          <div class="relative rounded-md shadow-sm">
+            <input type="number" step="0.1" id="targetIncomeRate" class="block w-full rounded-md border-gray-300 shadow-sm p-3 focus:ring-blue-500 focus:border-blue-500 transition" placeholder="예: 40" min="0" max="100">
+            <div class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none"><span class="text-gray-500 sm:text-sm">%</span></div>
+          </div>
+        </div>
+        <div class="flex-1">
+          <label for="requiredExpenseInput" class="block text-sm font-medium text-gray-700 mb-1">필요경비</label>
+          <div class="relative rounded-md shadow-sm">
+            <input type="text" id="requiredExpenseInput" class="block w-full rounded-md border-gray-300 shadow-sm p-3 focus:ring-blue-500 focus:border-blue-500 transition" placeholder="예: 500" oninput="formatNumber(this)">
+            <div class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none"><span class="text-gray-500 sm:text-sm">만</span></div>
+          </div>
+        </div>
+      </div>
 
-                <!-- New line for Applied Tax Credits -->
-                <div id="summaryTaxCreditsContainer" class="flex justify-between items-center text-sm font-medium text-gray-600">
-                    <span>세액공제액</span>
-                    <span id="summaryAppliedTaxCredits" class="text-blue-900 font-bold text-lg"></span>
-                </div>
-            </div>
-            <button id="copyButton" onclick="copySummary()" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-md transition-colors duration-200 shadow-lg mt-4">
-                결과 복사하기
-            </button>
+      <!-- 그 외 소득 -->
+      <div>
+        <label for="otherIncome" class="block text-sm font-medium text-gray-700 mb-1">그 외 소득금액</label>
+        <div class="relative rounded-md shadow-sm">
+          <input type="text" id="otherIncome" class="block w-full rounded-md border-gray-300 shadow-sm p-3 focus:ring-blue-500 focus:border-blue-500 transition" placeholder="예: 1,000,000" oninput="formatNumber(this)">
+          <div class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none"><span class="text-gray-500 sm:text-sm">원</span></div>
         </div>
-    </div>
-    
-    <!-- Modal for Logic -->
-    <div id="logicModal" class="modal-overlay hidden" onclick="closeLogicModal(event)">
-        <div class="modal-container">
-            <h4 class="text-xl font-bold text-center text-gray-800 mb-4">계산 로직</h4>
-            <div class="space-y-4 text-gray-700 text-sm">
-                <p>1. <strong>종합소득금액 계산:</strong></p>
-                <p class="pl-4">`종합소득금액 = (총수입금액 × 목표 소득률) + 그 외 소득금액`</p>
-                <p>2. <strong>과세표준 계산:</strong></p>
-                <p class="pl-4">`과세표준 = max(0, 종합소득금액 - 소득공제액)`</p>
-                <p>3. <strong>산출세액 계산:</strong></p>
-                <p class="pl-4">2024년 종합소득세율표에 따라 `과세표준`에 누진세율 적용 후 누진공제액 차감</p>
-                <p>4. <strong>최저한세 기준금액 계산:</strong></p>
-                <p class="pl-4">`산출세액`이 3,000만원 이하일 때: `산출세액 x 35%`</p>
-                <p class="pl-4">`산출세액`이 3,000만원 초과일 때: `(3,000만원 x 35%) + ((산출세액 - 3,000만원) x 45%)`</p>
-                <p>5. <strong>실제 적용 세액공제액 계산:</strong></p>
-                <p class="pl-4">`실제 적용 세액공제액 = min(입력된 세액공제액, 산출세액 - 최저한세 기준금액)`</p>
-                <p>6. <strong>농어촌특별세 계산:</strong></p>
-                <p class="pl-4">`농어촌특별세 = 실제 적용 세액공제액 x 20%`</p>
-                <p>7. <strong>결정세액 계산:</strong></p>
-                <p class="pl-4">`결정세액 = max(산출세액 - 실제 적용 세액공제액, 최저한세 기준금액)`</p>
-                <p>8. <strong>차감 납부세액 계산:</strong></p>
-                <p class="pl-4">`차감 납부 소득세 = 결정세액 - (중간예납 + 원천납부금액)`</p>
-                <p class="pl-4">`차감 납부 지방세 = (결정세액 - 원천납부금액) x 10%`</p>
-                <h4 class="text-lg font-bold text-gray-800 mt-6 mb-2">총괄 요약 로직</h4>
-                <p><strong>실질 세전소득:</strong></p>
-                <p class="pl-4">`실질 세전소득 = 총수입금액 x (실질 소득률 / 100)`</p>
-                <p><strong>실질 세후소득:</strong></p>
-                <p class="pl-4">`실질 세후소득 = 실질 세전소득 - 총 세금`</p>
-                <p class="pl-4">`실질 세후소득 비율(%) = (실질 세후소득 / 총수입금액) x 100`</p>
-                <p><strong>총 세금:</strong></p>
-                <p class="pl-4">`총 세금 = (결정세액 x 1.1) + 농어촌특별세`</p>
-                <p class="pl-4">`총 세금 비율(%) = (총 세금 / 총수입금액) x 100`</p>
-                <p><strong>세액공제 유무에 따른 세금:</strong></p>
-                <p class="pl-4">`세액공제액 미입력 시 (세금) = 차감 납부 소득세 + 차감 납부 지방세 + 농어촌특별세`</p>
-                <p class="pl-4">`세액공제액 입력 시 (공제 전 세금) = 세액공제액이 0일 때의 차감 납부 소득세 + 지방세 + 농어촌특별세`</p>
-                <p class="pl-4">`세액공제액 입력 시 (공제 후 세금) = 입력된 세액공제액을 적용한 차감 납부 소득세 + 지방세 + 농어촌특별세`</p>
-                <button onclick="closeLogicModal(event)" class="w-full bg-gray-500 hover:bg-gray-600 text-white font-bold py-2 px-4 rounded-md transition-colors duration-200 mt-4">
-                    닫기
-                </button>
-            </div>
+      </div>
+
+      <!-- 소득공제 -->
+      <div>
+        <label for="deductions" class="block text-sm font-medium text-gray-700 mb-1">소득공제</label>
+        <div class="relative rounded-md shadow-sm">
+          <input type="text" id="deductions" class="block w-full rounded-md border-gray-300 shadow-sm p-3 focus:ring-blue-500 focus:border-blue-500 transition" placeholder="예: 1,500,000" oninput="formatNumber(this)">
+          <div class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none"><span class="text-gray-500 sm:text-sm">원</span></div>
         </div>
+      </div>
+
+      <!-- 세액공제 -->
+      <div>
+        <label for="taxCredits" class="block text-sm font-medium text-gray-700 mb-1">세액공제액</label>
+        <div class="relative rounded-md shadow-sm">
+          <input type="text" id="taxCredits" class="block w-full rounded-md border-gray-300 shadow-sm p-3 focus:ring-blue-500 focus:border-blue-500 transition" placeholder="예: 150,000" oninput="formatNumber(this)">
+          <div class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none"><span class="text-gray-500 sm:text-sm">원</span></div>
+        </div>
+      </div>
+
+      <!-- 중간예납 / 원천납부 -->
+      <div>
+        <label for="interimPrepayment" class="block text-sm font-medium text-gray-700 mb-1">중간예납</label>
+        <div class="relative rounded-md shadow-sm">
+          <input type="text" id="interimPrepayment" class="block w-full rounded-md border-gray-300 shadow-sm p-3 focus:ring-blue-500 focus:border-blue-500 transition" placeholder="예: 50,000" oninput="formatNumber(this)">
+          <div class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none"><span class="text-gray-500 sm:text-sm">원</span></div>
+        </div>
+      </div>
+      <div>
+        <label for="withholdingTax" class="block text-sm font-medium text-gray-700 mb-1">원천납부금액</label>
+        <div class="relative rounded-md shadow-sm">
+          <input type="text" id="withholdingTax" class="block w-full rounded-md border-gray-300 shadow-sm p-3 focus:ring-blue-500 focus:border-blue-500 transition" placeholder="예: 100,000" oninput="formatNumber(this)">
+          <div class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none"><span class="text-gray-500 sm:text-sm">원</span></div>
+        </div>
+      </div>
+
+      <!-- 버튼 -->
+      <div class="flex space-x-4 mt-6">
+        <button onclick="calculateTax()" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-4 rounded-md transition-colors duration-200 shadow-lg">세금 계산하기</button>
+        <button onclick="resetCalculator()" class="w-full bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-3 px-4 rounded-md transition-colors duration-200 shadow-lg">초기화</button>
+      </div>
     </div>
 
-    <script>
-        // Function to format numbers with commas
-        function formatNumber(input) {
-            // Remove all non-digit characters from the input value
-            const value = input.value.replace(/[^0-9]/g, '');
-            // Format the number with commas
-            input.value = new Intl.NumberFormat('ko-KR').format(Number(value));
-        }
-        
-        // Helper function to format summary amounts in 만/억 units
-        function formatSummaryAmount(amount) {
-            const roundedAmount = Math.round(amount);
-            if (Math.abs(roundedAmount) >= 100000000) {
-                return `${(roundedAmount / 100000000).toFixed(2)}억`;
-            } else {
-                return `${(roundedAmount / 10000).toFixed(0)}만`;
-            }
-        }
-        
-        // Helper function to format tax credit amount in 만/억 units
-        function formatTaxCreditAmount(amount) {
-            const roundedAmount = Math.round(amount);
-            if (Math.abs(roundedAmount) >= 100000000) {
-                return `${(roundedAmount / 100000000).toFixed(2)}억`;
-            } else {
-                return `${(roundedAmount / 10000).toFixed(0)}만`;
-            }
-        }
+    <!-- 계산 결과 -->
+    <div id="result" class="mt-8 p-6 bg-gray-50 border border-gray-200 rounded-lg hidden">
+      <div class="collapsible-header" onclick="toggleResult()">
+        <h3 class="text-xl font-bold text-gray-800 mb-4">계산 결과</h3>
+        <span id="resultIcon" class="collapsible-icon transform transition-transform duration-300">&#9654;</span>
+      </div>
+      <div id="resultDetails" class="space-y-3 hidden">
+        <div class="flex justify-between items-center text-sm font-medium text-gray-600"><span>총수입금액</span><span id="enteredGrossIncome" class="text-gray-900 font-bold"></span></div>
+        <div class="flex justify-between items-center text-sm font-medium text-gray-600"><span>소득률</span><span id="enteredIncomeRate" class="text-gray-900 font-bold"></span></div>
+        <div id="businessIncomeContainer" class="flex justify-between items-center text-sm font-medium text-gray-600 hidden"><span>사업소득금액</span><span id="businessIncome" class="text-gray-900 font-bold"></span></div>
+        <div id="otherIncomeContainer" class="flex justify-between items-center text-sm font-medium text-gray-600 hidden"><span>그 외 소득금액</span><span id="enteredOtherIncome" class="text-gray-900 font-bold"></span></div>
+        <div id="comprehensiveIncomeContainer" class="flex justify-between items-center text-sm font-medium text-gray-600"><span>종합소득금액</span><span id="calculatedIncome" class="text-gray-900 font-bold"></span></div>
+        <div class="flex justify-between items-center text-sm font-medium text-gray-600"><span>소득공제</span><span id="enteredDeductions" class="text-gray-900 font-bold"></span></div>
+        <div class="flex justify-between items-center text-sm font-medium text-gray-600"><span>과세표준</span><span id="taxableBase" class="text-gray-900 font-bold"></span></div>
+        <div class="flex justify-between items-center text-sm font-medium text-gray-600"><span>산출세액</span><span id="calculatedTax" class="text-gray-900 font-bold"></span></div>
+        <div class="flex justify-between items-center text-sm font-medium text-gray-600"><span>최저한세 기준금액</span><span id="minimumTaxAmount" class="text-gray-900 font-bold"></span></div>
+        <div class="flex justify-between items-center text-sm font-medium text-gray-600"><span>실제 적용 세액공제액</span><span id="appliedTaxCredits" class="text-gray-900 font-bold"></span></div>
+        <div class="flex justify-between items-center text-sm font-medium text-gray-600"><span>농어촌특별세</span><span id="ruralTax" class="text-gray-900 font-bold"></span></div>
+        <hr class="border-gray-200" />
+        <div class="flex justify-between items-center text-lg font-bold text-gray-800"><span>결정세액</span><span id="finalTax" class="text-blue-600 text-xl"></span></div>
+        <div class="flex justify-between items-center text-sm font-medium text-gray-600 mt-4"><span>중간예납</span><span id="enteredInterimPrepayment" class="text-gray-900 font-bold"></span></div>
+        <div class="flex justify-between items-center text-sm font-medium text-gray-600"><span>원천납부금액</span><span id="enteredWithholdingTax" class="text-gray-900 font-bold"></span></div>
+        <hr class="border-gray-200" />
+        <div class="flex justify-between items-center text-lg font-bold text-gray-800"><span>차감 납부 소득세</span><span id="netIncomeTax" class="text-blue-600 text-xl"></span></div>
+        <div class="flex justify-between items-center text-lg font-bold text-gray-800"><span>차감 납부 지방세</span><span id="netLocalTax" class="text-blue-600 text-xl"></span></div>
+      </div>
+    </div>
 
-        // Toggles the visibility of the calculation results
-        function toggleResult() {
-            const resultDetails = document.getElementById('resultDetails');
-            const resultIcon = document.getElementById('resultIcon');
-            if (resultDetails.classList.contains('hidden')) {
-                resultDetails.classList.remove('hidden');
-                resultIcon.classList.add('rotated');
-            } else {
-                resultDetails.classList.add('hidden');
-                resultIcon.classList.remove('rotated');
-            }
-        }
+    <!-- 총괄 요약 -->
+    <div id="summaryBox" class="mt-8 p-6 bg-blue-50 border border-blue-200 rounded-lg hidden">
+      <h3 class="text-xl font-bold text-blue-800 mb-4">총괄 요약</h3>
+      <div class="space-y-3">
+        <div id="effectivePreTaxIncomeSummary" class="flex justify-between items-center text-base font-bold text-gray-800"></div>
+        <div id="effectivePostTaxIncomeSummary" class="flex justify-between items-center text-base font-bold text-gray-800"></div>
+        <div id="totalTaxSummary" class="flex justify-between items-center text-base font-bold text-gray-800"></div>
+        <div class="flex justify-between items-center text-sm font-medium text-gray-600"><span>소득률</span><span id="summaryIncomeRate" class="text-blue-900 font-bold text-lg"></span></div>
+        <div id="requiredExpenseContainer" class="flex justify-between items-center text-sm font-medium text-gray-600 hidden"><span>필요경비</span><span id="requiredExpense" class="text-blue-900 font-bold text-lg"></span></div>
+        <div id="taxSummaryBeforeAfterContainer">
+          <div class="flex justify-between items-center text-sm font-medium text-gray-600"><span>공제 전 세금</span><span id="summaryTaxBefore" class="text-blue-900 font-bold text-lg"></span></div>
+          <div class="flex justify-between items-center text-sm font-medium text-gray-600"><span>공제 후 세금</span><span id="summaryTaxAfter" class="text-blue-900 font-bold text-lg"></span></div>
+        </div>
+        <div id="taxSummaryTotalContainer" class="hidden">
+          <div class="flex justify-between items-center text-sm font-medium text-gray-600"><span>세금</span><span id="summaryTaxTotal" class="text-blue-900 font-bold text-lg"></span></div>
+        </div>
+        <div id="summaryTaxCreditsContainer" class="flex justify-between items-center text-sm font-medium text-gray-600"><span>세액공제액</span><span id="summaryAppliedTaxCredits" class="text-blue-900 font-bold text-lg"></span></div>
+      </div>
+      <button id="copyButton" onclick="copySummary()" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-md transition-colors duration-200 shadow-lg mt-4">결과 복사하기</button>
+    </div>
+  </div>
 
-        // Comprehensive income tax calculation logic (simplified for demonstration)
-        function calculateTax() {
-            // Reset copy button text
-            document.getElementById('copyButton').innerText = '결과 복사하기';
-            
-            // Get input values and convert to numbers. Remove commas before parsing.
-            const grossIncome = parseFloat(document.getElementById('grossIncome').value.replace(/,/g, '')) || 0;
-            const currentIncomeRate = parseFloat(document.getElementById('currentIncomeRate').value) || null;
-            const effectiveIncomeRate = parseFloat(document.getElementById('effectiveIncomeRate').value) || null;
-            const targetIncomeRateInput = parseFloat(document.getElementById('targetIncomeRate').value) || null;
-            const requiredExpenseInput = parseFloat(document.getElementById('requiredExpenseInput').value.replace(/,/g, '')) || null;
-            const otherIncome = parseFloat(document.getElementById('otherIncome').value.replace(/,/g, '')) || 0;
-            const deductions = parseFloat(document.getElementById('deductions').value.replace(/,/g, '')) || 0;
-            const taxCredits = parseFloat(document.getElementById('taxCredits').value.replace(/,/g, '')) || 0;
-            const interimPrepayment = parseFloat(document.getElementById('interimPrepayment').value.replace(/,/g, '')) || 0;
-            const withholdingTax = parseFloat(document.getElementById('withholdingTax').value.replace(/,/g, '')) || 0;
-            
-            let finalIncomeRate;
-            let requiredExpenseAmount = null;
+  <!-- 로직 모달 -->
+  <div id="logicModal" class="modal-overlay hidden" onclick="closeLogicModal(event)">
+    <div class="modal-container">
+      <h4 class="text-xl font-bold text-center text-gray-800 mb-4">계산 로직</h4>
+      <div class="space-y-4 text-gray-700 text-sm">
+        <p>1. <strong>종합소득금액</strong> = (총수입금액 × 목표/최종 소득률) + 그 외 소득금액</p>
+        <p>2. <strong>과세표준</strong> = max(0, 종합소득금액 - 소득공제액)</p>
+        <p>3. <strong>산출세액</strong> = 2024년 종합소득세율표 누진세율 적용 − 누진공제</p>
+        <p>4. <strong>최저한세 기준금액</strong>: 산출세액 ≤ 3,000만원 → ×35%, 초과분 → 45%</p>
+        <p>5. <strong>실제 적용 세액공제액</strong> = min(입력 세액공제, max(0, 산출세액 − 최저한세 기준금액))</p>
+        <p>6. <strong>농어촌특별세</strong> = 실제 적용 세액공제액 × 20%</p>
+        <p>7. <strong>결정세액</strong> = max(산출세액 − 실제 적용 세액공제액, 최저한세 기준금액)</p>
+        <p>8. <strong>차감 납부세액</strong>: 소득세 = 결정세액 − (중간예납 + 원천납부), 지방세 = (결정세액 − 원천납부) × 10%</p>
+        <h4 class="text-lg font-bold text-gray-800 mt-6 mb-2">총괄 요약</h4>
+        <p><strong>실질 세전소득</strong> = 총수입금액 × (실질 소득률 ÷ 100)</p>
+        <p><strong>총 세금</strong> = (결정세액 × 1.1) + 농특세</p>
+        <p><strong>실질 세후소득</strong> = 실질 세전소득 − 총 세금</p>
+        <button onclick="closeLogicModal(event)" class="w-full bg-gray-500 hover:bg-gray-600 text-white font-bold py-2 px-4 rounded-md transition-colors duration-200 mt-4">닫기</button>
+      </div>
+    </div>
+  </div>
 
-            if (requiredExpenseInput !== null) {
-                // Scenario: Required Expense is entered (in ten thousand won unit)
-                if (currentIncomeRate === null) {
-                    alert('필요경비 입력을 위해서는 현재 소득률이 반드시 필요합니다.');
-                    return;
-                }
-                requiredExpenseAmount = requiredExpenseInput * 10000;
-                const expenseToRate = (requiredExpenseAmount / grossIncome) * 100;
-                finalIncomeRate = currentIncomeRate - expenseToRate;
-            } else {
-                // Scenario: Target Income Rate is entered
-                if (targetIncomeRateInput !== null) {
-                    finalIncomeRate = targetIncomeRateInput;
-                } else {
-                    alert('목표 소득률 또는 필요경비를 입력해야 합니다.');
-                    return;
-                }
-            }
-            
-            // --- Helper function for calculations
-            const calculateTaxHelper = (credits, incomeRateToUse) => {
-                // Step 1: Calculate Comprehensive Income (종합소득금액)
-                const businessIncome = grossIncome * (incomeRateToUse / 100);
-                const comprehensiveIncome = businessIncome + otherIncome;
+  <!-- 메시지 박스 -->
+  <div id="messageBox" class="message-box"></div>
 
-                // Step 2: Calculate Taxable Base (과세표준)
-                const taxableBase = Math.max(0, comprehensiveIncome - deductions);
+  <script>
+    // 숫자 포맷팅 (빈 값 유지)
+    function formatNumber(input){
+      const raw = (input.value || '').replace(/[^0-9]/g,'');
+      input.value = raw === '' ? '' : new Intl.NumberFormat('ko-KR').format(Number(raw));
+    }
 
-                // Step 3: Calculate the tax amount based on tax brackets and progressive tax rates.
-                const taxBrackets = [
-                    { rate: 0.06, threshold: 14000000, progressiveDeduction: 0 },
-                    { rate: 0.15, threshold: 50000000, progressiveDeduction: 1260000 },
-                    { rate: 0.24, threshold: 88000000, progressiveDeduction: 5760000 },
-                    { rate: 0.35, threshold: 150000000, progressiveDeduction: 15440000 },
-                    { rate: 0.38, threshold: 300000000, progressiveDeduction: 19940000 },
-                    { rate: 0.40, threshold: 500000000, progressiveDeduction: 25940000 },
-                    { rate: 0.42, threshold: 1000000000, progressiveDeduction: 35940000 },
-                    { rate: 0.45, threshold: Infinity, progressiveDeduction: 65940000 },
-                ];
-                
-                let taxRate = 0;
-                let progressiveDeduction = 0;
-                for (const bracket of taxBrackets) {
-                    if (taxableBase <= bracket.threshold) {
-                        taxRate = bracket.rate;
-                        progressiveDeduction = bracket.progressiveDeduction;
-                        break;
-                    }
-                }
-                const calculatedTax = Math.max(0, taxableBase * taxRate - progressiveDeduction);
+    // 토스트 메시지
+    function showMessage(message){
+      const box = document.getElementById('messageBox');
+      box.innerText = message;
+      box.classList.add('show');
+      setTimeout(()=>box.classList.remove('show'), 3000);
+    }
 
-                // Step 4: Calculate the Minimum Tax (최저한세)
-                const minTaxBase = calculatedTax;
-                let minTaxAmount;
+    // 요약 금액 표기 (만/억)
+    function formatSummaryAmount(amount){
+      const rounded = Math.round(amount);
+      if (Math.abs(rounded) >= 100000000) return `${(rounded/100000000).toFixed(2)}억`;
+      return `${(rounded/10000).toFixed(0)}만`;
+    }
+    function formatTaxCreditAmount(amount){
+      const rounded = Math.round(amount);
+      if (Math.abs(rounded) >= 100000000) return `${(rounded/100000000).toFixed(2)}억`;
+      return `${(rounded/10000).toFixed(0)}만`;
+    }
 
-                if (minTaxBase <= 30000000) {
-                    minTaxAmount = minTaxBase * 0.35;
-                } else {
-                    minTaxAmount = (30000000 * 0.35) + ((minTaxBase - 30000000) * 0.45);
-                }
-                
-                // Step 5: Calculate the actual applied tax credits
-                const appliedTaxCredits = Math.min(credits, calculatedTax - minTaxAmount);
-                
-                // Step 6: Calculate the Rural Special Tax (농어촌특별세)
-                const ruralTax = appliedTaxCredits * 0.2;
+    // 결과 토글
+    function toggleResult(){
+      const details = document.getElementById('resultDetails');
+      const icon = document.getElementById('resultIcon');
+      const hidden = details.classList.contains('hidden');
+      details.classList.toggle('hidden');
+      icon.classList.toggle('rotated', hidden);
+    }
 
-                // Step 7: Calculate the final tax amount
-                const finalTax = Math.max(calculatedTax - appliedTaxCredits, minTaxAmount);
+    function calculateTax(){
+      // 복사 버튼 상태 초기화
+      const copyButton = document.getElementById('copyButton');
+      copyButton.innerText = '결과 복사하기';
+      copyButton.classList.remove('bg-gray-400','hover:bg-gray-400','copy-button-active');
+      copyButton.classList.add('bg-blue-600','hover:bg-blue-700');
 
-                // Step 8: Calculate Net Payable Tax (차감납부세액)
-                const netIncomeTax = finalTax - (interimPrepayment + withholdingTax);
-                const netLocalTax = (finalTax - withholdingTax) * 0.1;
+      // 입력값 파싱
+      const toNum = (id) => parseFloat((document.getElementById(id).value||'').replace(/,/g,'')) || 0;
+      const grossIncome = toNum('grossIncome');
+      const otherIncome = toNum('otherIncome');
+      const deductions = toNum('deductions');
+      const taxCredits = toNum('taxCredits');
+      const interimPrepayment = toNum('interimPrepayment');
+      const withholdingTax = toNum('withholdingTax');
 
-                return {
-                    businessIncome,
-                    comprehensiveIncome,
-                    taxableBase,
-                    calculatedTax,
-                    minTaxAmount,
-                    appliedTaxCredits,
-                    ruralTax,
-                    finalTax,
-                    netIncomeTax,
-                    netLocalTax
-                };
-            };
-            
-            // --- Calculations with entered values
-            const resultWithCredits = calculateTaxHelper(taxCredits, finalIncomeRate);
-            
-            // --- Calculations assuming no tax credits
-            const resultWithoutCredits = calculateTaxHelper(0, finalIncomeRate);
+      const currentIncomeRate = parseFloat(document.getElementById('currentIncomeRate').value);
+      const effectiveIncomeRate = parseFloat(document.getElementById('effectiveIncomeRate').value);
+      const targetIncomeRateInput = parseFloat(document.getElementById('targetIncomeRate').value);
+      const requiredExpenseInputRaw = (document.getElementById('requiredExpenseInput').value||'').replace(/,/g,'');
+      const requiredExpenseInput = requiredExpenseInputRaw === '' ? null : parseFloat(requiredExpenseInputRaw);
 
-            // Update UI with formatted results
-            const formatter = new Intl.NumberFormat('ko-KR', { style: 'currency', currency: 'KRW' });
-            
-            document.getElementById('enteredGrossIncome').innerText = formatter.format(grossIncome);
-            document.getElementById('enteredIncomeRate').innerText = `${finalIncomeRate.toFixed(2)}%`;
-            
-            // Display business and other income if 'otherIncome' is present
-            if (otherIncome > 0) {
-                document.getElementById('businessIncomeContainer').classList.remove('hidden');
-                document.getElementById('otherIncomeContainer').classList.remove('hidden');
-                document.getElementById('comprehensiveIncomeContainer').classList.remove('hidden');
+      // 필수 검증
+      if (grossIncome <= 0){ showMessage('총수입금액을 입력해주세요.'); return; }
+      if (targetIncomeRateInput != null && isNaN(targetIncomeRateInput) && requiredExpenseInput == null){ showMessage('목표 소득률 또는 필요경비를 입력해야 합니다.'); return; }
+      if (requiredExpenseInput != null && (currentIncomeRate == null || isNaN(currentIncomeRate))){ showMessage('필요경비 입력을 위해서는 현재 소득률이 반드시 필요합니다.'); return; }
 
-                document.getElementById('businessIncome').innerText = formatter.format(resultWithCredits.businessIncome);
-                document.getElementById('enteredOtherIncome').innerText = formatter.format(otherIncome);
-            } else {
-                document.getElementById('businessIncomeContainer').classList.add('hidden');
-                document.getElementById('otherIncomeContainer').classList.add('hidden');
-            }
+      // 최종 소득률 계산
+      let finalIncomeRate;
+      let calculatedRequiredExpense = null; // 원화
+      if (requiredExpenseInput != null){
+        calculatedRequiredExpense = requiredExpenseInput * 10000; // 만원 → 원
+        const expenseToRate = (calculatedRequiredExpense / grossIncome) * 100;
+        finalIncomeRate = (currentIncomeRate || 0) - expenseToRate;
+      } else {
+        finalIncomeRate = targetIncomeRateInput;
+      }
+      // 소득률 클램프 0~100
+      finalIncomeRate = Math.max(0, Math.min(100, Number(finalIncomeRate||0)));
 
-            document.getElementById('calculatedIncome').innerText = formatter.format(resultWithCredits.comprehensiveIncome);
-            document.getElementById('enteredDeductions').innerText = formatter.format(deductions);
-            document.getElementById('taxableBase').innerText = formatter.format(resultWithCredits.taxableBase);
-            document.getElementById('calculatedTax').innerText = formatter.format(resultWithCredits.calculatedTax);
-            document.getElementById('minimumTaxAmount').innerText = formatter.format(resultWithCredits.minTaxAmount);
-            document.getElementById('appliedTaxCredits').innerText = formatter.format(resultWithCredits.appliedTaxCredits);
-            document.getElementById('ruralTax').innerText = formatter.format(resultWithCredits.ruralTax);
-            document.getElementById('finalTax').innerText = formatter.format(resultWithCredits.finalTax);
-            document.getElementById('enteredInterimPrepayment').innerText = formatter.format(interimPrepayment);
-            document.getElementById('enteredWithholdingTax').innerText = formatter.format(withholdingTax);
-            document.getElementById('netIncomeTax').innerText = formatter.format(resultWithCredits.netIncomeTax);
-            document.getElementById('netLocalTax').innerText = formatter.format(resultWithCredits.netLocalTax);
+      // 공통 계산 함수
+      const calc = (credits, incomeRate) => {
+        const businessIncome = grossIncome * (incomeRate/100);
+        const comprehensiveIncome = businessIncome + otherIncome;
+        const taxableBase = Math.max(0, comprehensiveIncome - deductions);
 
-            // Update Summary Box
-            const effectiveIncomeRateValue = effectiveIncomeRate || finalIncomeRate;
-            const effectivePreTaxIncome = grossIncome * (effectiveIncomeRateValue / 100);
-            const totalTax = (resultWithCredits.finalTax * 1.1) + resultWithCredits.ruralTax;
-            const effectivePostTaxIncome = effectivePreTaxIncome - totalTax;
-            const effectivePostTaxPercentage = ((effectivePreTaxIncome - totalTax) / grossIncome * 100).toFixed(2);
-            
-            const monthlyPreTaxIncome = effectivePreTaxIncome / 12;
-            const monthlyPostTaxIncome = effectivePostTaxIncome / 12;
+        const taxBrackets = [
+          { rate: 0.06, threshold: 14000000, progressiveDeduction: 0 },
+          { rate: 0.15, threshold: 50000000, progressiveDeduction: 1260000 },
+          { rate: 0.24, threshold: 88000000, progressiveDeduction: 5760000 },
+          { rate: 0.35, threshold: 150000000, progressiveDeduction: 15440000 },
+          { rate: 0.38, threshold: 300000000, progressiveDeduction: 19940000 },
+          { rate: 0.40, threshold: 500000000, progressiveDeduction: 25940000 },
+          { rate: 0.42, threshold: 1000000000, progressiveDeduction: 35940000 },
+          { rate: 0.45, threshold: Infinity, progressiveDeduction: 65940000 },
+        ];
+        let taxRate = 0, progressiveDeduction = 0;
+        for (const b of taxBrackets){ if (taxableBase <= b.threshold){ taxRate = b.rate; progressiveDeduction = b.progressiveDeduction; break; } }
+        const calculatedTax = Math.max(0, taxableBase * taxRate - progressiveDeduction);
 
-            document.getElementById('effectivePreTaxIncomeSummary').innerHTML = `실질 연 세전소득 ${formatSummaryAmount(effectivePreTaxIncome)} | 월 세전소득 ${formatSummaryAmount(monthlyPreTaxIncome)} (${effectiveIncomeRateValue}%)`;
-            document.getElementById('effectivePostTaxIncomeSummary').innerHTML = `실질 연 세후소득 ${formatSummaryAmount(effectivePostTaxIncome)} | 월 세후소득 ${formatSummaryAmount(monthlyPostTaxIncome)} (${effectivePostTaxPercentage}%)`;
-            document.getElementById('totalTaxSummary').innerHTML = `총 세금 ${formatSummaryAmount(totalTax)} (${((totalTax / grossIncome) * 100).toFixed(2)}%)`;
+        // 최저한세
+        const minTaxBase = calculatedTax;
+        const minTaxAmount = minTaxBase <= 30000000 ? (minTaxBase * 0.35) : (30000000*0.35 + (minTaxBase-30000000)*0.45);
 
-            document.getElementById('summaryIncomeRate').innerText = `${finalIncomeRate.toFixed(2)}%`;
-            
-            // Display Required Expense if applicable
-            const requiredExpenseContainer = document.getElementById('requiredExpenseContainer');
-            if (currentIncomeRate !== null && targetIncomeRateInput !== null) {
-                const requiredExpenseAmount = grossIncome * ((currentIncomeRate - targetIncomeRateInput) / 100);
-                const roundedRequiredExpense = Math.ceil(requiredExpenseAmount / 10000) * 10000;
-                requiredExpenseContainer.classList.remove('hidden');
-                document.getElementById('requiredExpense').innerText = formatSummaryAmount(roundedRequiredExpense);
-            } else if (requiredExpenseInput !== null) {
-                requiredExpenseContainer.classList.remove('hidden');
-                document.getElementById('requiredExpense').innerText = formatSummaryAmount(requiredExpenseInput * 10000);
-            } else {
-                requiredExpenseContainer.classList.add('hidden');
-            }
+        // 세액공제 상한(음수 방지)
+        const creditCap = Math.max(0, calculatedTax - minTaxAmount);
+        const appliedTaxCredits = Math.min(credits, creditCap);
 
-            const totalTaxAfterDeduction = resultWithCredits.netIncomeTax + resultWithCredits.netLocalTax + resultWithCredits.ruralTax;
-            const totalTaxBeforeDeduction = resultWithoutCredits.netIncomeTax + resultWithoutCredits.netLocalTax + resultWithoutCredits.ruralTax;
-            
-            // Conditional Summary Display
-            if (taxCredits === 0) {
-                document.getElementById('taxSummaryBeforeAfterContainer').classList.add('hidden');
-                document.getElementById('summaryTaxCreditsContainer').classList.add('hidden');
-                document.getElementById('taxSummaryTotalContainer').classList.remove('hidden');
-                document.getElementById('summaryTaxTotal').innerText = formatSummaryAmount(totalTaxBeforeDeduction);
-            } else {
-                document.getElementById('taxSummaryBeforeAfterContainer').classList.remove('hidden');
-                document.getElementById('summaryTaxCreditsContainer').classList.remove('hidden');
-                document.getElementById('taxSummaryTotalContainer').classList.add('hidden');
-                document.getElementById('summaryTaxBefore').innerText = formatSummaryAmount(totalTaxBeforeDeduction);
-                document.getElementById('summaryTaxAfter').innerText = formatSummaryAmount(totalTaxAfterDeduction);
-                document.getElementById('summaryAppliedTaxCredits').innerText = formatTaxCreditAmount(resultWithCredits.appliedTaxCredits);
-            }
+        // 농특세 (세액공제의 20%)
+        const ruralTax = appliedTaxCredits * 0.2;
 
-            // Show results and summary
-            document.getElementById('result').classList.remove('hidden');
-            document.getElementById('summaryBox').classList.remove('hidden');
-        }
+        // 결정세액(최저한세 적용)
+        const finalTax = Math.max(calculatedTax - appliedTaxCredits, minTaxAmount);
 
-        // Reset the calculator form and results
-        function resetCalculator() {
-            // Clear all input fields
-            document.getElementById('grossIncome').value = '';
-            document.getElementById('currentIncomeRate').value = '';
-            document.getElementById('effectiveIncomeRate').value = '';
-            document.getElementById('targetIncomeRate').value = '';
-            document.getElementById('requiredExpenseInput').value = '';
-            document.getElementById('otherIncome').value = '';
-            document.getElementById('deductions').value = '';
-            document.getElementById('taxCredits').value = '';
-            document.getElementById('interimPrepayment').value = '';
-            document.getElementById('withholdingTax').value = '';
-            
-            // Hide the result and summary boxes
-            document.getElementById('result').classList.add('hidden');
-            document.getElementById('summaryBox').classList.add('hidden');
-            
-            // Reset collapsible state
-            document.getElementById('resultDetails').classList.add('hidden');
-            document.getElementById('resultIcon').classList.remove('rotated');
-        }
+        // 차감 납부세액
+        const netIncomeTax = finalTax - (interimPrepayment + withholdingTax);
+        const netLocalTax = (finalTax - withholdingTax) * 0.1;
 
-        function copySummary() {
-            const incomeRate = document.getElementById('summaryIncomeRate').innerText;
-            const requiredExpense = document.getElementById('requiredExpense').innerText;
-            
-            let summaryText = `소득률: ${incomeRate}\n`;
-            
-            const requiredExpenseContainer = document.getElementById('requiredExpenseContainer');
-            if (!requiredExpenseContainer.classList.contains('hidden')) {
-                summaryText += `필요경비: ${requiredExpense}\n`;
-            }
+        return { businessIncome, comprehensiveIncome, taxableBase, calculatedTax, minTaxAmount, appliedTaxCredits, ruralTax, finalTax, netIncomeTax, netLocalTax };
+      };
 
-            const taxSummaryTotalContainer = document.getElementById('taxSummaryTotalContainer');
-            if (!taxSummaryTotalContainer.classList.contains('hidden')) {
-                const totalTax = document.getElementById('summaryTaxTotal').innerText;
-                summaryText += `세금: ${totalTax}`;
-            } else {
-                const taxBefore = document.getElementById('summaryTaxBefore').innerText;
-                const taxAfter = document.getElementById('summaryTaxAfter').innerText;
-                const appliedCredits = document.getElementById('summaryAppliedTaxCredits').innerText;
-                summaryText += `공제 전 세금: ${taxBefore}\n`;
-                summaryText += `공제 후 세금: ${taxAfter}\n`;
-                summaryText += `세액공제액: ${appliedCredits}`;
-            }
+      const withCredits = calc(taxCredits, finalIncomeRate);
+      const withoutCredits = calc(0, finalIncomeRate);
 
-            const tempInput = document.createElement('textarea');
-            tempInput.value = summaryText;
-            document.body.appendChild(tempInput);
-            tempInput.select();
-            document.execCommand('copy');
-            document.body.removeChild(tempInput);
+      const KRW = new Intl.NumberFormat('ko-KR', { style: 'currency', currency: 'KRW' });
+      document.getElementById('enteredGrossIncome').innerText = KRW.format(grossIncome);
+      document.getElementById('enteredIncomeRate').innerText = `${finalIncomeRate.toFixed(2)}%`;
 
-            // Change button text and color
-            const copyButton = document.getElementById('copyButton');
-            copyButton.innerText = '복사완료';
-            copyButton.classList.remove('bg-blue-600', 'hover:bg-blue-700');
-            copyButton.classList.add('bg-gray-400', 'hover:bg-gray-400', 'copy-button-active');
-            
-            // Revert after a delay
-            setTimeout(() => {
-                copyButton.innerText = '결과 복사하기';
-                copyButton.classList.remove('bg-gray-400', 'hover:bg-gray-400', 'copy-button-active');
-                copyButton.classList.add('bg-blue-600', 'hover:bg-blue-700');
-            }, 2000);
-        }
-        
-        // --- Modal Functions ---
-        function showLogicModal() {
-            document.getElementById('logicModal').classList.remove('hidden');
-        }
-        
-        function closeLogicModal(event) {
-            // Close the modal only if the overlay or the close button is clicked
-            if (event.target === document.getElementById('logicModal') || event.target.tagName === 'BUTTON') {
-                document.getElementById('logicModal').classList.add('hidden');
-            }
-        }
-    </script>
+      if (otherIncome > 0){
+        document.getElementById('businessIncomeContainer').classList.remove('hidden');
+        document.getElementById('otherIncomeContainer').classList.remove('hidden');
+        document.getElementById('businessIncome').innerText = KRW.format(withCredits.businessIncome);
+        document.getElementById('enteredOtherIncome').innerText = KRW.format(otherIncome);
+      } else {
+        document.getElementById('businessIncomeContainer').classList.add('hidden');
+        document.getElementById('otherIncomeContainer').classList.add('hidden');
+      }
+
+      document.getElementById('calculatedIncome').innerText = KRW.format(withCredits.comprehensiveIncome);
+      document.getElementById('enteredDeductions').innerText = KRW.format(deductions);
+      document.getElementById('taxableBase').innerText = KRW.format(withCredits.taxableBase);
+      document.getElementById('calculatedTax').innerText = KRW.format(withCredits.calculatedTax);
+      document.getElementById('minimumTaxAmount').innerText = KRW.format(withCredits.minTaxAmount);
+      document.getElementById('appliedTaxCredits').innerText = KRW.format(withCredits.appliedTaxCredits);
+      document.getElementById('ruralTax').innerText = KRW.format(withCredits.ruralTax);
+      document.getElementById('finalTax').innerText = KRW.format(withCredits.finalTax);
+      document.getElementById('enteredInterimPrepayment').innerText = KRW.format(interimPrepayment);
+      document.getElementById('enteredWithholdingTax').innerText = KRW.format(withholdingTax);
+      document.getElementById('netIncomeTax').innerText = KRW.format(withCredits.netIncomeTax);
+      document.getElementById('netLocalTax').innerText = KRW.format(withCredits.netLocalTax);
+
+      const effectiveIncomeRateValue = isNaN(effectiveIncomeRate) ? finalIncomeRate : effectiveIncomeRate;
+      const effectivePreTaxIncome = grossIncome * (effectiveIncomeRateValue/100);
+      const totalTax = (withCredits.finalTax * 1.1) + withCredits.ruralTax;
+      const effectivePostTaxIncome = effectivePreTaxIncome - totalTax;
+      const effectivePostTaxPercentage = ((effectivePreTaxIncome - totalTax) / grossIncome * 100).toFixed(2);
+
+      const monthlyPreTaxIncome = effectivePreTaxIncome / 12;
+      const monthlyPostTaxIncome = effectivePostTaxIncome / 12;
+
+      document.getElementById('effectivePreTaxIncomeSummary').innerHTML = `실질 연 세전소득 ${formatSummaryAmount(effectivePreTaxIncome)} | 월 세전소득 ${formatSummaryAmount(monthlyPreTaxIncome)} (${effectiveIncomeRateValue}%)`;
+      document.getElementById('effectivePostTaxIncomeSummary').innerHTML = `실질 연 세후소득 ${formatSummaryAmount(effectivePostTaxIncome)} | 월 세후소득 ${formatSummaryAmount(monthlyPostTaxIncome)} (${effectivePostTaxPercentage}%)`;
+      document.getElementById('totalTaxSummary').innerHTML = `총 세금 ${formatSummaryAmount(totalTax)} (${((totalTax/grossIncome)*100).toFixed(2)}%)`;
+      document.getElementById('summaryIncomeRate').innerText = `${finalIncomeRate.toFixed(2)}%`;
+
+      const requiredExpenseContainer = document.getElementById('requiredExpenseContainer');
+      if (targetIncomeRateInput != null && !isNaN(targetIncomeRateInput) && currentIncomeRate != null && !isNaN(currentIncomeRate)){
+        const req = grossIncome * ((currentIncomeRate - targetIncomeRateInput)/100);
+        const rounded = Math.ceil(req/10000)*10000;
+        requiredExpenseContainer.classList.remove('hidden');
+        document.getElementById('requiredExpense').innerText = formatSummaryAmount(rounded);
+      } else if (requiredExpenseInput != null) {
+        requiredExpenseContainer.classList.remove('hidden');
+        document.getElementById('requiredExpense').innerText = formatSummaryAmount(requiredExpenseInput*10000);
+      } else {
+        requiredExpenseContainer.classList.add('hidden');
+      }
+
+      const totalTaxAfter = withCredits.netIncomeTax + withCredits.netLocalTax + withCredits.ruralTax;
+      const totalTaxBefore = withoutCredits.netIncomeTax + withoutCredits.netLocalTax + withoutCredits.ruralTax;
+
+      if (taxCredits === 0){
+        document.getElementById('taxSummaryBeforeAfterContainer').classList.add('hidden');
+        document.getElementById('summaryTaxCreditsContainer').classList.add('hidden');
+        document.getElementById('taxSummaryTotalContainer').classList.remove('hidden');
+        document.getElementById('summaryTaxTotal').innerText = formatSummaryAmount(totalTaxBefore);
+      } else {
+        document.getElementById('taxSummaryBeforeAfterContainer').classList.remove('hidden');
+        document.getElementById('summaryTaxCreditsContainer').classList.remove('hidden');
+        document.getElementById('taxSummaryTotalContainer').classList.add('hidden');
+        document.getElementById('summaryTaxBefore').innerText = formatSummaryAmount(totalTaxBefore);
+        document.getElementById('summaryTaxAfter').innerText = formatSummaryAmount(totalTaxAfter);
+        document.getElementById('summaryAppliedTaxCredits').innerText = formatTaxCreditAmount(withCredits.appliedTaxCredits);
+      }
+
+      document.getElementById('result').classList.remove('hidden');
+      document.getElementById('summaryBox').classList.remove('hidden');
+    }
+
+    function resetCalculator(){
+      const ids = ['grossIncome','currentIncomeRate','effectiveIncomeRate','targetIncomeRate','requiredExpenseInput','otherIncome','deductions','taxCredits','interimPrepayment','withholdingTax'];
+      ids.forEach(id=>document.getElementById(id).value='');
+      document.getElementById('result').classList.add('hidden');
+      document.getElementById('summaryBox').classList.add('hidden');
+      document.getElementById('resultDetails').classList.add('hidden');
+      document.getElementById('resultIcon').classList.remove('rotated');
+    }
+
+    async function copySummary(){
+      const incomeRate = document.getElementById('summaryIncomeRate').innerText;
+      const reqContainer = document.getElementById('requiredExpenseContainer');
+      const requiredExpense = document.getElementById('requiredExpense').innerText;
+      const totalContainer = document.getElementById('taxSummaryTotalContainer');
+
+      let text = `소득률: ${incomeRate}\n`;
+      if (!reqContainer.classList.contains('hidden')) text += `필요경비: ${requiredExpense}\n`;
+      if (!totalContainer.classList.contains('hidden')){
+        const totalTax = document.getElementById('summaryTaxTotal').innerText;
+        text += `세금: ${totalTax}`;
+      } else {
+        const before = document.getElementById('summaryTaxBefore').innerText;
+        const after = document.getElementById('summaryTaxAfter').innerText;
+        const credits = document.getElementById('summaryAppliedTaxCredits').innerText;
+        text += `공제 전 세금: ${before}\n공제 후 세금: ${after}\n세액공제액: ${credits}`;
+      }
+
+      const btn = document.getElementById('copyButton');
+      try{
+        await navigator.clipboard.writeText(text);
+      }catch(e){
+        // Fallback
+        const ta = document.createElement('textarea');
+        ta.value = text; document.body.appendChild(ta); ta.select(); document.execCommand('copy'); document.body.removeChild(ta);
+      }
+      btn.innerText = '복사완료';
+      btn.classList.remove('bg-blue-600','hover:bg-blue-700');
+      btn.classList.add('bg-gray-400','hover:bg-gray-400','copy-button-active');
+      setTimeout(()=>{
+        btn.innerText = '결과 복사하기';
+        btn.classList.remove('bg-gray-400','hover:bg-gray-400','copy-button-active');
+        btn.classList.add('bg-blue-600','hover:bg-blue-700');
+      }, 2000);
+    }
+
+    function showLogicModal(){ document.getElementById('logicModal').classList.remove('hidden'); }
+    function closeLogicModal(event){ if (event.target === document.getElementById('logicModal') || event.target.tagName === 'BUTTON'){ document.getElementById('logicModal').classList.add('hidden'); } }
+  </script>
 </body>
 </html>
