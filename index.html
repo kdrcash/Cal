@@ -350,7 +350,8 @@
       const monthlyPreTaxIncome = effectivePreTaxIncome / 12;
       const monthlyPostTaxIncome = effectivePostTaxIncome / 12;
 
-      document.getElementById('effectivePreTaxIncomeSummary').innerHTML = `실질 연 세전소득 ${formatSummaryAmount(effectivePreTaxIncome)} | 월 세전소득 ${formatSummaryAmount(monthlyPreTaxIncome)} (${effectiveIncomeRateValue}%)`;
+      // 월 세전소득 옆의 % 표기 수정
+      document.getElementById('effectivePreTaxIncomeSummary').innerHTML = `실질 연 세전소득 ${formatSummaryAmount(effectivePreTaxIncome)} | 월 세전소득 ${formatSummaryAmount(monthlyPreTaxIncome)} (${effectiveIncomeRateValue.toFixed(2)}%)`;
       document.getElementById('effectivePostTaxIncomeSummary').innerHTML = `실질 연 세후소득 ${formatSummaryAmount(effectivePostTaxIncome)} | 월 세후소득 ${formatSummaryAmount(monthlyPostTaxIncome)} (${effectivePostTaxPercentage}%)`;
       document.getElementById('totalTaxSummary').innerHTML = `총 세금 ${formatSummaryAmount(totalTax)} (${((totalTax/grossIncome)*100).toFixed(2)}%)`;
       document.getElementById('summaryIncomeRate').innerText = `${finalIncomeRate.toFixed(2)}%`;
