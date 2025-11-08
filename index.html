@@ -3,32 +3,87 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>종합소득세 간편 계산기 - Ver 1.2.7</title>
+  <title>종합소득세 간편 계산기 - Ver 2.3</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <style>
-    body { font-family: 'Inter', sans-serif; background-color: #f3f4f6; }
+    /* Base Setup */
+    body { font-family: 'Inter', sans-serif; background-color: #f9fafb; /* Very light background */ }
     .collapsible-header { cursor: pointer; display: flex; justify-content: space-between; align-items: center; }
     .collapsible-icon { transition: transform 0.3s ease-in-out; }
     .collapsible-icon.rotated { transform: rotate(90deg); }
-    .copy-button-active { background-color: #9ca3af; pointer-events: none; }
-    .modal-overlay { position: fixed; inset: 0; background-color: rgba(0,0,0,0.5); display: flex; justify-content: center; align-items: center; z-index: 1000; }
-    .modal-container { background-color: white; padding: 24px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); max-width: 90%; max-height: 90%; overflow-y: auto; position: relative; }
-    .message-box { position: fixed; top: 20px; left: 50%; transform: translateX(-50%); background-color: #f87171; color: #fff; padding: 12px 24px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); z-index: 2000; opacity: 0; visibility: hidden; transition: opacity .3s, visibility .3s; }
+    .copy-button-active { background-color: #9ca3af !important; pointer-events: none; }
+    .modal-overlay { position: fixed; inset: 0; background-color: rgba(0,0,0,0.6); display: flex; justify-content: center; align-items: center; z-index: 1000; }
+    .modal-container { background-color: white; padding: 30px; border-radius: 16px; box-shadow: 0 10px 25px rgba(0,0,0,0.2); max-width: 90%; max-height: 90%; overflow-y: auto; position: relative; }
+    .message-box { position: fixed; top: 20px; left: 50%; transform: translateX(-50%); background-color: #ef4444; color: #fff; padding: 12px 24px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); z-index: 2000; opacity: 0; visibility: hidden; transition: opacity .3s, visibility .3s; }
     .message-box.show { opacity: 1; visibility: visible; }
+    
+    /* Sleek Redesign UI */
+    .app-card {
+        box-shadow: 0 15px 40px rgba(0, 0, 0, 0.1); /* Soft, deep shadow */
+        border: 1px solid #e5e7eb;
+    }
+    .input-field {
+        transition: all 0.2s ease-in-out;
+        border: 1px solid #d1d5db;
+        padding: 0.8rem; /* Slightly larger input */
+        /* font-weight: 600; -> 제거하여 일반 폰트 두께로 복구 */
+    }
+    .input-field:focus {
+        border-color: #3b82f6; /* Blue-500 */
+        box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.4); /* Stronger focus ring */
+        background-color: #eff6ff; /* Light blue background on focus */
+    }
+    .button-primary {
+        background: linear-gradient(135deg, #2563eb, #1e40af); /* Darker blue gradient */
+        transition: all 0.3s ease-in-out;
+        box-shadow: 0 8px 15px rgba(59, 130, 246, 0.4);
+    }
+    .button-primary:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 10px 20px rgba(30, 64, 175, 0.5);
+    }
+    .button-secondary {
+        background-color: #f3f4f6;
+        color: #4b5563;
+        border: 1px solid #d1d5db;
+        transition: all 0.2s ease-in-out;
+    }
+    .button-secondary:hover {
+        background-color: #e5e7eb;
+    }
+    .grouped-input-box {
+        background-color: #f7f9fc; /* Very light subtle blue */
+        border: 1px solid #e0e7ff; /* Soft blue border */
+        box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.03);
+    }
+    #result {
+        border: none;
+        background-color: #ffffff;
+        box-shadow: 0 10px 20px rgba(0, 0, 0, 0.08);
+    }
+    #summaryBox {
+        background-color: #e0f2fe; /* Light blue accent */
+        border: 1px solid #93c5fd;
+        box-shadow: 0 8px 15px rgba(59, 130, 246, 0.15);
+    }
+    .final-result-value {
+        font-weight: 800;
+        color: #1d4ed8; /* Darker blue for emphasis */
+    }
   </style>
 </head>
-<body class="bg-gray-100 p-4 pt-8">
-  <div class="bg-white rounded-2xl shadow-xl w-full max-w-lg p-6 sm:p-8 mx-auto">
-    <h1 class="text-3xl font-bold text-center text-gray-800 mb-2">종합소득세 간편 계산기</h1>
-    <p class="text-center text-gray-500 font-semibold mb-6 cursor-pointer" onclick="showLogicModal()">Ver 1.2.7</p>
+<body class="bg-gray-50 p-4 pt-8">
+  <div class="bg-white rounded-3xl app-card w-full max-w-lg p-7 sm:p-9 mx-auto">
+    <h1 class="text-3xl font-extrabold text-center text-gray-800 mb-2">종합소득세 간편 계산기</h1>
+    <p class="text-center text-gray-500 font-semibold mb-7 cursor-pointer" onclick="showLogicModal()">Ver 2.3</p>
 
     <!-- 입력 폼 -->
-    <div id="calculatorForm" class="space-y-4">
+    <div id="calculatorForm" class="space-y-5">
       <!-- 총수입금액 -->
       <div>
         <label for="grossIncome" class="block text-sm font-medium text-gray-700 mb-1">총수입금액</label>
-        <div class="relative rounded-md shadow-sm">
-          <input type="text" id="grossIncome" class="block w-full rounded-md border-gray-300 shadow-sm p-3 focus:ring-blue-500 focus:border-blue-500 transition" placeholder="예: 50,000,000" oninput="formatNumber(this)">
+        <div class="relative rounded-lg shadow-sm">
+          <input type="text" id="grossIncome" class="input-field block w-full rounded-lg border-gray-300 shadow-sm transition" placeholder="예: 50,000,000" oninput="formatNumber(this)">
           <div class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none"><span class="text-gray-500 sm:text-sm">원</span></div>
         </div>
       </div>
@@ -37,15 +92,15 @@
       <div class="flex space-x-4">
         <div class="flex-1">
           <label for="currentIncomeRate" class="block text-sm font-medium text-gray-700 mb-1">현재 소득률</label>
-          <div class="relative rounded-md shadow-sm">
-            <input type="number" step="0.1" id="currentIncomeRate" class="block w-full rounded-md border-gray-300 shadow-sm p-3 focus:ring-blue-500 focus:border-blue-500 transition" placeholder="예: 40" min="0" max="100">
+          <div class="relative rounded-lg shadow-sm">
+            <input type="number" step="0.1" id="currentIncomeRate" class="input-field block w-full rounded-lg border-gray-300 shadow-sm transition" placeholder="예: 40" min="0" max="100">
             <div class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none"><span class="text-gray-500 sm:text-sm">%</span></div>
           </div>
         </div>
         <div class="flex-1">
           <label for="effectiveIncomeRate" class="block text-sm font-medium text-gray-700 mb-1">실질 소득률</label>
-          <div class="relative rounded-md shadow-sm">
-            <input type="number" step="0.1" id="effectiveIncomeRate" class="block w-full rounded-md border-gray-300 shadow-sm p-3 focus:ring-blue-500 focus:border-blue-500 transition" placeholder="예: 40" min="0" max="100">
+          <div class="relative rounded-lg shadow-sm">
+            <input type="number" step="0.1" id="effectiveIncomeRate" class="input-field block w-full rounded-lg border-gray-300 shadow-sm transition" placeholder="예: 40" min="0" max="100">
             <div class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none"><span class="text-gray-500 sm:text-sm">%</span></div>
           </div>
         </div>
@@ -55,108 +110,112 @@
       <div class="flex space-x-4">
         <div class="flex-1">
           <label for="targetIncomeRate" class="block text-sm font-medium text-gray-700 mb-1">목표 소득률</label>
-          <div class="relative rounded-md shadow-sm">
-            <input type="number" step="0.1" id="targetIncomeRate" class="block w-full rounded-md border-gray-300 shadow-sm p-3 focus:ring-blue-500 focus:border-blue-500 transition" placeholder="예: 40" min="0" max="100">
+          <div class="relative rounded-lg shadow-sm">
+            <input type="number" step="0.1" id="targetIncomeRate" class="input-field block w-full rounded-lg border-gray-300 shadow-sm transition" placeholder="예: 40" min="0" max="100">
             <div class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none"><span class="text-gray-500 sm:text-sm">%</span></div>
           </div>
         </div>
         <div class="flex-1">
           <label for="requiredExpenseInput" class="block text-sm font-medium text-gray-700 mb-1">필요경비</label>
-          <div class="relative rounded-md shadow-sm">
-            <input type="text" id="requiredExpenseInput" class="block w-full rounded-md border-gray-300 shadow-sm p-3 focus:ring-blue-500 focus:border-blue-500 transition" placeholder="예: 500" oninput="formatNumber(this)">
+          <div class="relative rounded-lg shadow-sm">
+            <input type="text" id="requiredExpenseInput" class="input-field block w-full rounded-lg border-gray-300 shadow-sm transition" placeholder="예: 500" oninput="formatNumber(this)">
             <div class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none"><span class="text-gray-500 sm:text-sm">만</span></div>
           </div>
         </div>
       </div>
 
-      <!-- 그 외 소득 (4항목) -->
-      <div class="space-y-3">
-        <label class="block text-sm font-semibold text-gray-800">그 외 소득</label>
-        <div>
-          <label for="otherBusinessIncome" class="block text-sm font-medium text-gray-700 mb-1">1) 그 외 사업소득금액</label>
-          <div class="relative rounded-md shadow-sm">
-            <input type="text" id="otherBusinessIncome" class="block w-full rounded-md border-gray-300 shadow-sm p-3 focus:ring-blue-500 focus:border-blue-500 transition" placeholder="예: 1,000,000" oninput="formatNumber(this)">
-            <div class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none"><span class="text-gray-500 sm:text-sm">원</span></div>
+      <!-- 그 외 소득 (4항목) - 묶음 처리 및 간격 조정 -->
+      <div class="space-y-3 p-4 rounded-xl grouped-input-box">
+        <label class="block text-sm font-semibold text-gray-800 border-b border-gray-200 pb-2">그 외 소득 (사업/부동산/금융/기타)</label>
+        <div class="space-y-3">
+          <div>
+            <label for="otherBusinessIncome" class="block text-xs font-medium text-gray-600 mb-1">1) 그 외 사업소득금액</label>
+            <div class="relative rounded-md shadow-sm">
+              <input type="text" id="otherBusinessIncome" class="input-field block w-full rounded-lg border-gray-300 shadow-sm transition p-2.5" placeholder="예: 1,000,000" oninput="formatNumber(this)">
+              <div class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none"><span class="text-gray-500 text-xs">원</span></div>
+            </div>
           </div>
-        </div>
-        <div>
-          <label for="realEstateIncome" class="block text-sm font-medium text-gray-700 mb-1">2) 부동산 소득금액</label>
-          <div class="relative rounded-md shadow-sm">
-            <input type="text" id="realEstateIncome" class="block w-full rounded-md border-gray-300 shadow-sm p-3 focus:ring-blue-500 focus:border-blue-500 transition" placeholder="예: 500,000" oninput="formatNumber(this)">
-            <div class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none"><span class="text-gray-500 sm:text-sm">원</span></div>
+          <div>
+            <label for="realEstateIncome" class="block text-xs font-medium text-gray-600 mb-1">2) 부동산 소득금액</label>
+            <div class="relative rounded-md shadow-sm">
+              <input type="text" id="realEstateIncome" class="input-field block w-full rounded-lg border-gray-300 shadow-sm transition p-2.5" placeholder="예: 500,000" oninput="formatNumber(this)">
+              <div class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none"><span class="text-gray-500 text-xs">원</span></div>
+            </div>
           </div>
-        </div>
-        <div>
-          <label for="interestDividendIncome" class="block text-sm font-medium text-gray-700 mb-1">3) 이자·배당소득금액</label>
-          <div class="relative rounded-md shadow-sm">
-            <input type="text" id="interestDividendIncome" class="block w-full rounded-md border-gray-300 shadow-sm p-3 focus:ring-blue-500 focus:border-blue-500 transition" placeholder="예: 2,400,000" oninput="formatNumber(this)">
-            <div class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none"><span class="text-gray-500 sm:text-sm">원</span></div>
+          <div>
+            <label for="interestDividendIncome" class="block text-xs font-medium text-gray-600 mb-1">3) 이자·배당소득금액</label>
+            <div class="relative rounded-md shadow-sm">
+              <input type="text" id="interestDividendIncome" class="input-field block w-full rounded-lg border-gray-300 shadow-sm transition p-2.5" placeholder="예: 2,400,000" oninput="formatNumber(this)">
+              <div class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none"><span class="text-gray-500 text-xs">원</span></div>
+            </div>
           </div>
-        </div>
-        <div>
-          <label for="otherMiscIncome" class="block text-sm font-medium text-gray-700 mb-1">4) 그 외 소득금액 (1–3에 해당하지 않는 소득)</label>
-          <div class="relative rounded-md shadow-sm">
-            <input type="text" id="otherMiscIncome" class="block w-full rounded-md border-gray-300 shadow-sm p-3 focus:ring-blue-500 focus:border-blue-500 transition" placeholder="예: 300,000" oninput="formatNumber(this)">
-            <div class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none"><span class="text-gray-500 sm:text-sm">원</span></div>
+          <div>
+            <label for="otherMiscIncome" class="block text-xs font-medium text-gray-600 mb-1">4) 그 외 소득금액 (1–3에 해당하지 않는 소득)</label>
+            <div class="relative rounded-md shadow-sm">
+              <input type="text" id="otherMiscIncome" class="input-field block w-full rounded-lg border-gray-300 shadow-sm transition p-2.5" placeholder="예: 300,000" oninput="formatNumber(this)">
+              <div class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none"><span class="text-gray-500 text-xs">원</span></div>
+            </div>
           </div>
         </div>
       </div>
 
-      <!-- 소득공제 -->
-      <div>
-        <label for="deductions" class="block text-sm font-medium text-gray-700 mb-1">소득공제</label>
-        <div class="relative rounded-md shadow-sm">
-          <input type="text" id="deductions" class="block w-full rounded-md border-gray-300 shadow-sm p-3 focus:ring-blue-500 focus:border-blue-500 transition" placeholder="예: 14,000,000" oninput="formatNumber(this)">
-          <div class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none"><span class="text-gray-500 sm:text-sm">원</span></div>
+      <!-- 소득공제 / 세액공제 -->
+      <div class="flex space-x-4">
+        <div class="flex-1">
+          <label for="deductions" class="block text-sm font-medium text-gray-700 mb-1">소득공제</label>
+          <div class="relative rounded-lg shadow-sm">
+            <input type="text" id="deductions" class="input-field block w-full rounded-lg border-gray-300 shadow-sm transition" placeholder="예: 14,000,000" oninput="formatNumber(this)">
+            <div class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none"><span class="text-gray-500 sm:text-sm">원</span></div>
+          </div>
         </div>
-      </div>
-
-      <!-- 세액공제 -->
-      <div>
-        <label for="taxCredits" class="block text-sm font-medium text-gray-700 mb-1">세액공제</label>
-        <div class="relative rounded-md shadow-sm">
-          <input type="text" id="taxCredits" class="block w-full rounded-md border-gray-300 shadow-sm p-3 focus:ring-blue-500 focus:border-blue-500 transition" placeholder="예: 150,000" oninput="formatNumber(this)">
-          <div class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none"><span class="text-gray-500 sm:text-sm">원</span></div>
+        <div class="flex-1">
+          <label for="taxCredits" class="block text-sm font-medium text-gray-700 mb-1">세액공제</label>
+          <div class="relative rounded-lg shadow-sm">
+            <input type="text" id="taxCredits" class="input-field block w-full rounded-lg border-gray-300 shadow-sm transition" placeholder="예: 150,000" oninput="formatNumber(this)">
+            <div class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none"><span class="text-gray-500 sm:text-sm">원</span></div>
+          </div>
         </div>
       </div>
 
       <!-- 중간예납 / 원천납부 -->
-      <div>
-        <label for="interimPrepayment" class="block text-sm font-medium text-gray-700 mb-1">중간예납</label>
-        <div class="relative rounded-md shadow-sm">
-          <input type="text" id="interimPrepayment" class="block w-full rounded-md border-gray-300 shadow-sm p-3 focus:ring-blue-500 focus:border-blue-500 transition" placeholder="예: 50,000" oninput="formatNumber(this)">
-          <div class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none"><span class="text-gray-500 sm:text-sm">원</span></div>
+      <div class="flex space-x-4">
+        <div class="flex-1">
+          <label for="interimPrepayment" class="block text-sm font-medium text-gray-700 mb-1">중간예납</label>
+          <div class="relative rounded-lg shadow-sm">
+            <input type="text" id="interimPrepayment" class="input-field block w-full rounded-lg border-gray-300 shadow-sm transition" placeholder="예: 50,000" oninput="formatNumber(this)">
+            <div class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none"><span class="text-gray-500 sm:text-sm">원</span></div>
+          </div>
+        </div>
+        <div class="flex-1">
+          <label for="withholdingTax" class="block text-sm font-medium text-gray-700 mb-1">원천납부</label>
+          <div class="relative rounded-lg shadow-sm">
+            <input type="text" id="withholdingTax" class="input-field block w-full rounded-lg border-gray-300 shadow-sm transition" placeholder="예: 100,000" oninput="formatNumber(this)">
+            <div class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none"><span class="text-gray-500 sm:text-sm">원</span></div>
+          </div>
         </div>
       </div>
-      <div>
-        <label for="withholdingTax" class="block text-sm font-medium text-gray-700 mb-1">원천납부세액</label>
-        <div class="relative rounded-md shadow-sm">
-          <input type="text" id="withholdingTax" class="block w-full rounded-md border-gray-300 shadow-sm p-3 focus:ring-blue-500 focus:border-blue-500 transition" placeholder="예: 100,000" oninput="formatNumber(this)">
-          <div class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none"><span class="text-gray-500 sm:text-sm">원</span></div>
-        </div>
-      </div>
-
+      
       <!-- 버튼 -->
-      <div class="flex space-x-4 mt-6">
-        <button onclick="calculateTax()" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-4 rounded-md transition-colors duration-200 shadow-lg">세금 계산하기</button>
-        <button onclick="resetCalculator()" class="w-full bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-3 px-4 rounded-md transition-colors duration-200 shadow-lg">초기화</button>
+      <div class="flex space-x-4 pt-4">
+        <button onclick="calculateTax()" class="w-full text-white font-bold py-3.5 px-4 rounded-lg button-primary">세금 계산하기</button>
+        <button onclick="resetCalculator()" class="w-full font-bold py-3.5 px-4 rounded-lg button-secondary">초기화</button>
       </div>
     </div>
 
     <!-- 계산 결과 -->
-    <div id="result" class="mt-8 p-6 bg-gray-50 border border-gray-200 rounded-lg hidden">
+    <div id="result" class="mt-8 p-6 rounded-xl hidden">
       <div class="collapsible-header" onclick="toggleResult()">
-        <h3 class="text-xl font-bold text-gray-800 mb-4">계산 결과</h3>
-        <span id="resultIcon" class="collapsible-icon transform transition-transform duration-300">&#9654;</span>
+        <h3 class="text-xl font-bold text-gray-800">상세 계산 결과</h3>
+        <span id="resultIcon" class="collapsible-icon transform transition-transform duration-300 text-gray-500">&#9654;</span>
       </div>
-      <div id="resultDetails" class="space-y-3 hidden">
+      <div id="resultDetails" class="space-y-3 pt-4 border-t border-gray-100 mt-2 hidden">
         <div class="flex justify-between items-center text-sm font-medium text-gray-600"><span>총수입금액</span><span id="enteredGrossIncome" class="text-gray-900 font-bold"></span></div>
         <div class="flex justify-between items-center text-sm font-medium text-gray-600"><span>소득률</span><span id="enteredIncomeRate" class="text-gray-900 font-bold"></span></div>
         <div id="businessIncomeContainer" class="flex justify-between items-center text-sm font-medium text-gray-600 hidden"><span>사업소득금액</span><span id="businessIncome" class="text-gray-900 font-bold"></span></div>
 
         <!-- 그 외 소득 합계/상세 -->
         <div id="otherIncomeSection" class="space-y-1 hidden">
-          <div class="flex justify-between items-center text-sm font-semibold text-gray-700">
+          <div class="flex justify-between items-center text-sm font-semibold text-gray-700 border-t border-gray-200 pt-2">
             <span>그 외 소득 (합계)</span><span id="enteredOtherIncomeTotal" class="text-gray-900 font-bold"></span>
           </div>
           <div id="rowOtherBiz" class="flex justify-between items-center text-xs font-medium text-gray-500 hidden"><span>ㆍ그 외 사업소득금액</span><span id="valOtherBiz" class="text-gray-700 font-semibold"></span></div>
@@ -165,38 +224,38 @@
           <div id="rowOtherMisc" class="flex justify-between items-center text-xs font-medium text-gray-500 hidden"><span>ㆍ그 외 소득금액(기타)</span><span id="valOtherMisc" class="text-gray-700 font-semibold"></span></div>
         </div>
 
-        <div class="flex justify-between items-center text-sm font-medium text-gray-600"><span>종합소득금액</span><span id="calculatedIncome" class="text-gray-900 font-bold"></span></div>
+        <div class="flex justify-between items-center text-sm font-medium text-gray-600 border-t border-gray-200 pt-2"><span>종합소득금액</span><span id="calculatedIncome" class="text-gray-900 font-bold"></span></div>
         <div class="flex justify-between items-center text-sm font-medium text-gray-600"><span>소득공제</span><span id="enteredDeductions" class="text-gray-900 font-bold"></span></div>
         <div class="flex justify-between items-center text-sm font-medium text-gray-600"><span>과세표준(합산분)</span><span id="taxableBase" class="text-gray-900 font-bold"></span></div>
 
-        <div class="flex justify-between items-center text-sm font-medium text-gray-600">
+        <div class="flex justify-between items-center text-sm font-medium text-gray-600 pt-2 border-t border-gray-200">
           <span>종합과세 방식 산출세액</span><span id="calculatedTax" class="text-gray-900 font-bold"></span>
         </div>
         <div class="flex justify-between items-center text-sm font-medium text-gray-600">
           <span>분리과세 방식 산출세액</span><span id="compare2Tax" class="text-gray-900 font-bold"></span>
         </div>
 
-        <div class="flex justify-between items-center text-sm font-medium text-gray-600"><span>최저한세 기준금액</span><span id="minimumTaxAmount" class="text-gray-900 font-bold"></span></div>
+        <div class="flex justify-between items-center text-sm font-medium text-gray-600 pt-2 border-t border-gray-200"><span>최저한세 기준금액</span><span id="minimumTaxAmount" class="text-gray-900 font-bold"></span></div>
         <div class="flex justify-between items-center text-sm font-medium text-gray-600"><span>실제 적용 세액공제액</span><span id="appliedTaxCredits" class="text-gray-900 font-bold"></span></div>
         <div class="flex justify-between items-center text-sm font-medium text-gray-600"><span>농어촌특별세</span><span id="ruralTax" class="text-gray-900 font-bold"></span></div>
-        <hr class="border-gray-200" />
-        <div class="flex justify-between items-center text-lg font-bold text-gray-800"><span>결정세액</span><span id="finalTax" class="text-blue-600 text-xl"></span></div>
+        <hr class="border-gray-300 mt-3" />
+        <div class="flex justify-between items-center text-xl font-bold text-gray-800 pt-2"><span>결정세액</span><span id="finalTax" class="final-result-value text-blue-700 text-2xl"></span></div>
         <div class="flex justify-between items-center text-sm font-medium text-gray-600 mt-4"><span>중간예납</span><span id="enteredInterimPrepayment" class="text-gray-900 font-bold"></span></div>
-        <div class="flex justify-between items-center text-sm font-medium text-gray-600"><span>원천납부세액</span><span id="enteredWithholdingTax" class="text-gray-900 font-bold"></span></div>
-        <hr class="border-gray-200" />
-        <div class="flex justify-between items-center text-lg font-bold text-gray-800"><span>차감 납부 소득세</span><span id="netIncomeTax" class="text-blue-600 text-xl"></span></div>
-        <div class="flex justify-between items-center text-lg font-bold text-gray-800"><span>차감 납부 지방세</span><span id="netLocalTax" class="text-blue-600 text-xl"></span></div>
+        <div class="flex justify-between items-center text-sm font-medium text-gray-600"><span>원천납부</span><span id="enteredWithholdingTax" class="text-gray-900 font-bold"></span></div>
+        <hr class="border-gray-300 mt-3" />
+        <div class="flex justify-between items-center text-lg font-bold text-gray-800"><span>차감 납부 소득세</span><span id="netIncomeTax" class="final-result-value text-blue-700 text-xl"></span></div>
+        <div class="flex justify-between items-center text-lg font-bold text-gray-800"><span>차감 납부 지방세</span><span id="netLocalTax" class="final-result-value text-blue-700 text-xl"></span></div>
       </div>
     </div>
 
     <!-- 총괄 요약 -->
-    <div id="summaryBox" class="mt-8 p-6 bg-blue-50 border border-blue-200 rounded-lg hidden">
-      <h3 class="text-xl font-bold text-blue-800 mb-4">총괄 요약</h3>
+    <div id="summaryBox" class="mt-8 p-6 rounded-xl summary-box hidden">
+      <h3 class="text-xl font-bold text-blue-800 mb-4 border-b border-blue-300 pb-2">총괄 요약</h3>
       <div class="space-y-3">
         <div id="effectivePreTaxIncomeSummary" class="flex justify-between items-center text-base font-bold text-gray-800"></div>
         <div id="effectivePostTaxIncomeSummary" class="flex justify-between items-center text-base font-bold text-gray-800"></div>
         <div id="totalTaxSummary" class="flex justify-between items-center text-base font-bold text-gray-800"></div>
-        <div class="flex justify-between items-center text-sm font-medium text-gray-600"><span>소득률</span><span id="summaryIncomeRate" class="text-blue-900 font-bold text-lg"></span></div>
+        <div class="flex justify-between items-center text-sm font-medium text-gray-600 pt-2 border-t border-blue-200"><span>소득률</span><span id="summaryIncomeRate" class="text-blue-900 font-bold text-lg"></span></div>
         <div id="requiredExpenseContainer" class="flex justify-between items-center text-sm font-medium text-gray-600 hidden"><span>필요경비</span><span id="requiredExpense" class="text-blue-900 font-bold text-lg"></span></div>
         <div id="taxSummaryBeforeAfterContainer">
           <div class="flex justify-between items-center text-sm font-medium text-gray-600"><span>공제 전 세금</span><span id="summaryTaxBefore" class="text-blue-900 font-bold text-lg"></span></div>
@@ -207,7 +266,7 @@
         </div>
         <div id="summaryTaxCreditsContainer" class="flex justify-between items-center text-sm font-medium text-gray-600"><span>세액공제액</span><span id="summaryAppliedTaxCredits" class="text-blue-900 font-bold text-lg"></span></div>
       </div>
-      <button id="copyButton" onclick="copySummary()" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-md transition-colors duration-200 shadow-lg mt-4">결과 복사하기</button>
+      <button id="copyButton" onclick="copySummary()" class="w-full text-white font-bold py-3 px-4 rounded-lg button-primary mt-6">결과 복사하기</button>
     </div>
   </div>
 
@@ -216,13 +275,13 @@
     <div class="modal-container">
       <h4 class="text-xl font-bold text-center text-gray-800 mb-4">계산 로직(실무형)</h4>
       <div class="space-y-4 text-gray-700 text-sm">
-        <p>1. <strong>종합소득금액(합산분)</strong> = (총수입×최종 소득률) + [그 외 사업] + [부동산] + [기타] + <u>max(0, 금융−2,000만)</u></p>
+        <p>1. <strong>종합소득금액(합산분)</strong> = (총수입×최종 소득률) + [그 외 사업(1)] + [부동산(2)] + [기타(4)] + <u>max(0, 금융(3)−2,000만)</u></p>
         <p>2. <strong>과세표준(합산분)</strong> = max(0, 합산분 종합소득금액 − 소득공제)</p>
         <p>3. <strong>합산분 산출세액</strong> = 누진세율(과표×세율 − 누진공제)</p>
-        <p>4. <strong>분리과세(금융)</strong> = min(금융, 2,000만) × 14%</p>
+        <p>4. <strong>분리과세(금융)</strong> = min(금융(3), 2,000만) × 14%</p>
         <p>5. <strong>종합과세 방식 산출세액</strong> = 합산분 산출세액 + 분리과세(14%)</p>
         <p>6. <strong>분리과세 방식 산출세액</strong> = 금융×14% + Tax(다른 소득 − 소득공제)</p>
-        <p>7. <strong>사업 최저한세 (개선 로직)</strong>: <u>메인사업+그외사업(1)+부동산(2)</u> 소득 비율로 <strong>합산분 산출세액</strong>을 안분 후 35%/45% 비교</p>
+        <p class="font-bold text-blue-700">7. <strong>사업 최저한세 (핵심 로직)</strong>: <u>메인사업+그외사업(1)+부동산(2)</u> 소득 비율로 <strong>합산분 산출세액</strong>을 안분 후 35%/45% 비교 적용</p>
         <p>8. <strong>세액공제</strong>: 사업분에만 적용(최저한세 하회 불가), 분리과세분 제외</p>
         <p>9. <strong>결정세액</strong> = (합산분 비사업 + 분리과세 14%) + (사업분 비교적용 후 − 공제)</p>
         <p>10. <strong>농특세</strong> = 적용 세액공제 × 20%</p>
@@ -236,7 +295,7 @@
   <div id="messageBox" class="message-box"></div>
 
   <script>
-    /* ===== 공통 ===== */
+    /* ===== 공통 상수 및 유틸리티 함수 (로직 유지) ===== */
     const SEP_THRESHOLD = 20_000_000;
     const FIN_RATE = 0.14;
     const KRW = new Intl.NumberFormat('ko-KR', { style: 'currency', currency: 'KRW' });
@@ -254,7 +313,6 @@
     const formatNumber = (input) => {
       let raw = input.value || '';
       const startsWithMinus = raw.startsWith('-');
-      // 숫자만 추출
       let digits = raw.replace(/[^\d]/g, '');
 
       if (digits === '') {
@@ -265,7 +323,6 @@
       const num = Number(digits);
       let formatted = new Intl.NumberFormat('ko-KR').format(num);
       
-      // 음수 부호 다시 추가
       if (startsWithMinus) {
           formatted = `-${formatted}`;
       }
@@ -304,15 +361,13 @@
       icon.classList.toggle('rotated', hidden);
     };
 
-    /* ===== 메인 계산 ===== */
+    /* ===== 메인 계산 로직 (유지) ===== */
     function calculateTax(){
-      // 복사버튼 초기화
       const copyBtn = document.getElementById('copyButton');
       copyBtn.innerText = '결과 복사하기';
       copyBtn.classList.remove('bg-gray-400','hover:bg-gray-400','copy-button-active');
       copyBtn.classList.add('bg-blue-600','hover:bg-blue-700');
 
-      // 입력값
       const grossIncome = toNum('grossIncome');
       const otherBusinessIncome = toNum('otherBusinessIncome');
       const realEstateIncome = toNum('realEstateIncome');
@@ -331,12 +386,10 @@
       const requiredExpenseInputRaw = (document.getElementById('requiredExpenseInput').value || '').replace(/,/g,'');
       const requiredExpenseInput = requiredExpenseInputRaw === '' ? null : parseFloat(requiredExpenseInputRaw);
 
-      // 검증
       if (grossIncome <= 0) { showMessage('총수입금액을 입력해주세요.'); return; }
       if (targetIncomeRateInput != null && isNaN(targetIncomeRateInput) && requiredExpenseInput == null) { showMessage('목표 소득률 또는 필요경비를 입력해야 합니다.'); return; }
       if (requiredExpenseInput != null && (currentIncomeRate == null || isNaN(currentIncomeRate))) { showMessage('필요경비 입력을 위해서는 현재 소득률이 필요합니다.'); return; }
 
-      // 최종 소득률
       let finalIncomeRate;
       if (requiredExpenseInput != null){
         const reqExpenseKRW = requiredExpenseInput * 10_000;
@@ -346,48 +399,37 @@
       }
       finalIncomeRate = Math.max(0, Math.min(100, Number(finalIncomeRate || 0)));
 
-      // 계산 로직 (금융 2천만 분리, 초과 합산)
       const calc = (credits) => {
         const businessIncome = grossIncome * (finalIncomeRate / 100);
 
         const finSeparated = Math.min(interestDividendIncome, SEP_THRESHOLD);
         const finExcess = Math.max(0, interestDividendIncome - SEP_THRESHOLD);
 
-        // 합산되는 소득(금융 초과분 포함)
         const aggregatedIncome =
           businessIncome + otherBusinessIncome + realEstateIncome + otherMiscIncome + finExcess;
 
         const taxableBaseAggregated = Math.max(0, aggregatedIncome - deductions);
 
-        const aggregatedTax = taxProgressive(taxableBaseAggregated);       // 합산분 산출세액 (금융 초과분 포함)
-        const separatedTax14 = finSeparated * FIN_RATE;                    // 금융 분리 14%
-        const calculatedTax = aggregatedTax + separatedTax14;              // 종합과세 방식 산출세액
+        const aggregatedTax = taxProgressive(taxableBaseAggregated);
+        const separatedTax14 = finSeparated * FIN_RATE;
+        const calculatedTax = aggregatedTax + separatedTax14;
 
-        // 비교용: 분리과세 방식 산출세액
         const otherComprehensiveIncome = businessIncome + otherBusinessIncome + realEstateIncome + otherMiscIncome;
         const otherTaxableBase = Math.max(0, otherComprehensiveIncome - deductions);
         const compare2Tax = interestDividendIncome * FIN_RATE + taxProgressive(otherTaxableBase);
 
-        // === 최저한세 로직 ===
-
-        // 1. 최저한세 적용 대상 소득 (사업소득 관련: 메인사업 + 그 외 사업 1) + 부동산 2))
         const minTaxBaseIncome = businessIncome + otherBusinessIncome + realEstateIncome;
 
-        // 2. 최저한세 적용 대상 세액 안분 비율 (종합소득금액 대비 사업소득 관련 소득의 비율)
         const minTaxShare = (aggregatedIncome > 0 && minTaxBaseIncome > 0)
           ? (minTaxBaseIncome / aggregatedIncome)
           : 0;
 
-        // 3. 최저한세 적용 대상 사업분 산출세액 (aggregatedTax를 비율로 안분)
         const businessPortionTax = aggregatedTax * minTaxShare;
-
-        // 4. 비사업분 세액 (최저한세 미적용 세액 + 금융 분리과세 14%)
         const nonBusinessPortionTax = (aggregatedTax - businessPortionTax) + separatedTax14;
 
-        // 최저한세 및 세액공제(사업분만)
-        const minTaxAmount = minTax(businessPortionTax); // 사업분 산출세액에 최저한세율(35/45) 적용
+        const minTaxAmount = minTax(businessPortionTax);
         const businessAfterMin = Math.max(businessPortionTax, minTaxAmount);
-        // 최저한세가 적용된 후 남은 세액공제 가능 한도
+        
         const appliedTaxCredits = Math.min(credits, Math.max(0, businessAfterMin - minTaxAmount));
         const ruralTax = appliedTaxCredits * 0.2;
 
@@ -429,7 +471,6 @@
           const row = document.getElementById(rowId);
           (cond || val !== 0) ? (row.classList.remove('hidden'), setText(valId, won(val))) : row.classList.add('hidden');
         };
-        // 음수 입력 가능 항목 포함, 0이 아닐 경우 표시
         toggleRow(otherBusinessIncome !== 0, 'rowOtherBiz', 'valOtherBiz', otherBusinessIncome);
         toggleRow(realEstateIncome !== 0, 'rowRealEstate', 'valRealEstate', realEstateIncome);
         toggleRow(interestDividendIncome !== 0, 'rowInterestDiv', 'valInterestDiv', interestDividendIncome);
